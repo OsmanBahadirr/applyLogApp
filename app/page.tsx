@@ -1,10 +1,10 @@
 import JobTracker from '@/components/job-tracker';
-import { getApplications } from '@/lib/application-store';
+import { getDashboardState } from '@/lib/application-store';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const applications = await getApplications();
+  const { applications, deletedApplications } = await getDashboardState();
 
-  return <JobTracker initialApplications={applications} />;
+  return <JobTracker initialApplications={applications} initialDeletedApplications={deletedApplications} />;
 }

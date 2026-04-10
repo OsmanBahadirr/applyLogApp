@@ -3,8 +3,23 @@ import type { Application } from './types';
 
 const STORAGE_KEY = 'jobcodex.applications';
 
+function getTodayDate() {
+  const date = new Date();
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function normalizeApplications(applications: Application[]): Application[] {
+  return applications.map((application, index) => ({
+    ...application,
+    id: typeof application.id === 'number' ? application.id : index + 1,
+    applicationDate: typeof application.applicationDate === 'string' && application.applicationDate ? application.applicationDate : getTodayDate(),
+    starred: typeof application.starred === 'boolean' ? application.starred : false,
+  }));
+}
+
 export function getSeedApplications(): Application[] {
-  return seedApplications as Application[];
+  return normalizeApplications(seedApplications as Application[]);
 }
 
 export function loadApplications(): Application[] {
@@ -15,7 +30,7 @@ export function loadApplications(): Application[] {
     if (!raw) return getSeedApplications();
 
     const parsed = JSON.parse(raw) as Application[];
-    return Array.isArray(parsed) ? parsed : getSeedApplications();
+    return Array.isArray(parsed) ? normalizeApplications(parsed) : getSeedApplications();
   } catch {
     return getSeedApplications();
   }

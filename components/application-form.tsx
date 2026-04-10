@@ -4,13 +4,20 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
 
-type FormState = Omit<Application, 'id'>;
+type FormState = Omit<Application, 'id' | 'starred'>;
+
+function getTodayDate() {
+  const date = new Date();
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
 
 const emptyForm: FormState = {
   company: '',
   program: '',
   workType: 'Remote',
   status: 'Applied',
+  applicationDate: getTodayDate(),
   notes: '',
 };
 
@@ -23,22 +30,23 @@ export function ApplicationForm({
   open: boolean;
   initial?: Application | null;
   onClose: () => void;
-  onSave: (application: Omit<Application, 'id'>) => void;
+  onSave: (application: FormState) => void;
 }) {
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
     if (!open) return;
     setForm(
-      initial
-        ? {
-            company: initial.company,
-            program: initial.program,
-            workType: initial.workType,
-            status: initial.status,
-            notes: initial.notes,
-          }
-        : emptyForm,
+        initial
+          ? {
+              company: initial.company,
+              program: initial.program,
+              workType: initial.workType,
+              status: initial.status,
+              applicationDate: initial.applicationDate,
+              notes: initial.notes,
+            }
+          : emptyForm,
     );
   }, [initial, open]);
 
@@ -89,6 +97,11 @@ export function ApplicationForm({
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
+          </label>
+
+          <label className="text-sm font-medium text-slate-700">
+            Application date
+            <input type="date" className={fieldClass} value={form.applicationDate} onChange={(e) => setForm({ ...form, applicationDate: e.target.value })} />
           </label>
 
           <label className="md:col-span-2 text-sm font-medium text-slate-700">

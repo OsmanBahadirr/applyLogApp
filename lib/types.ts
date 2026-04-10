@@ -21,7 +21,14 @@ export type Application = {
   program: string;
   workType: WorkType;
   status: ApplicationStatus;
+  applicationDate: string;
+  starred: boolean;
   notes: string;
+};
+
+export type DashboardState = {
+  applications: Application[];
+  deletedApplications: Application[];
 };
 
 export const STATUS_OPTIONS: ApplicationStatus[] = [
