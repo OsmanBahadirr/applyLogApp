@@ -19,7 +19,7 @@ function normalizeApplications(applications: Application[]): Application[] {
 }
 
 export function getSeedApplications(): Application[] {
-  return normalizeApplications(seedApplications as Application[]);
+  return normalizeApplications(seedApplications as unknown as Application[]);
 }
 
 export function loadApplications(): Application[] {
@@ -29,8 +29,8 @@ export function loadApplications(): Application[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return getSeedApplications();
 
-    const parsed = JSON.parse(raw) as Application[];
-    return Array.isArray(parsed) ? normalizeApplications(parsed) : getSeedApplications();
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? normalizeApplications(parsed as Application[]) : getSeedApplications();
   } catch {
     return getSeedApplications();
   }

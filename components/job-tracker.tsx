@@ -7,6 +7,7 @@ import { StatusBadge } from './status-badge';
 import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
 
 type FilterValue = 'All' | ApplicationStatus | WorkType;
+type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationDate' | 'notes';
 
 const STATUS_ORDER: ApplicationStatus[] = [
   'Accepted',
@@ -18,6 +19,15 @@ const STATUS_ORDER: ApplicationStatus[] = [
 ];
 
 const statusRank = new Map(STATUS_ORDER.map((status, index) => [status, index]));
+
+const DETAIL_FIELDS: Array<{ key: DetailField; label: string; type: 'text' | 'select' | 'date' | 'textarea' }> = [
+  { key: 'company', label: 'Company', type: 'text' },
+  { key: 'program', label: 'Program', type: 'text' },
+  { key: 'status', label: 'Status', type: 'select' },
+  { key: 'workType', label: 'Work type', type: 'select' },
+  { key: 'applicationDate', label: 'Application date', type: 'date' },
+  { key: 'notes', label: 'Notes', type: 'textarea' },
+];
 
 const STAT_CARD_STYLES: Record<string, string> = {
   'Total applications': 'border-slate-200 bg-slate-50 text-slate-950',
@@ -45,9 +55,9 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterValue>('All');
   const [workFilter, setWorkFilter] = useState<FilterValue>('All');
-  const [editing, setEditing] = useState<Application | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [activeDetailField, setActiveDetailField] = useState<DetailField | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const persistState = (nextApplications: Application[], nextDeletedApplications: Application[]) => {
@@ -91,23 +101,15 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   }, [applications]);
 
   const openCreate = () => {
-    setEditing(null);
     setIsFormOpen(true);
   };
 
   const saveApplication = (payload: Omit<Application, 'id' | 'starred'>) => {
-    if (editing) {
-      const nextApplications = applications.map((item) => (item.id === editing.id ? { ...editing, ...payload } : item));
-      setApplications(nextApplications);
-      persistState(nextApplications, deletedApplications);
-    } else {
-      const nextId = Math.max(0, ...applications.map((item) => item.id), ...deletedApplications.map((item) => item.id)) + 1;
-      const nextApplications = [{ id: nextId, starred: false, ...payload }, ...applications];
-      setApplications(nextApplications);
-      persistState(nextApplications, deletedApplications);
-    }
+    const nextId = Math.max(0, ...applications.map((item) => item.id), ...deletedApplications.map((item) => item.id)) + 1;
+    const nextApplications = [{ id: nextId, starred: false, ...payload }, ...applications];
+    setApplications(nextApplications);
+    persistState(nextApplications, deletedApplications);
     setIsFormOpen(false);
-    setEditing(null);
   };
 
   const removeApplication = (id: number) => {
@@ -129,7 +131,23 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     persistState(nextApplications, deletedApplications);
   };
 
-  const closeDetails = () => setSelectedApplication(null);
+  const closeDetails = () => {
+    setSelectedApplication(null);
+    setActiveDetailField(null);
+  };
+
+  const updateSelectedApplication = (patch: Partial<Application>) => {
+    setSelectedApplication((current) => (current ? { ...current, ...patch } : current));
+  };
+
+  const saveDetails = () => {
+    if (!selectedApplication) return;
+
+    const nextApplications = applications.map((item) => (item.id === selectedApplication.id ? selectedApplication : item));
+    setApplications(nextApplications);
+    persistState(nextApplications, deletedApplications);
+    closeDetails();
+  };
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -186,101 +204,94 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
         </div>
 
         <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-collapse">
-              <colgroup>
-                <col className="w-14" />
-                <col className="w-[30%]" />
-                <col className="w-[38%]" />
-                <col className="w-[14%]" />
-                <col className="w-[18%]" />
-              </colgroup>
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-4 align-middle">
-                    <span className="sr-only">Starred</span>
-                  </th>
-                  <th className="px-5 py-4 align-middle">Company</th>
-                  <th className="px-5 py-4 align-middle">Program</th>
-                  <th className="px-5 py-4 align-middle">Status</th>
-                  <th className="px-5 py-4 align-middle">Actions</th>
+          <table className="w-full table-fixed border-collapse">
+            <colgroup>
+              <col className="w-14" />
+              <col className="w-[30%]" />
+              <col className="w-[38%]" />
+              <col className="w-[14%]" />
+              <col className="w-[18%]" />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-4 align-middle">
+                  <span className="sr-only">Starred</span>
+                </th>
+                <th className="px-5 py-4 align-middle">Company</th>
+                <th className="px-5 py-4 align-middle">Program</th>
+                <th className="px-5 py-4 align-middle">Status</th>
+                <th className="px-5 py-4 align-middle">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-14 text-center text-sm text-slate-500">
+                    No applications match the current filters.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-14 text-center text-sm text-slate-500">
-                      No applications match the current filters.
-                    </td>
-                  </tr>
-                ) : filtered.map((item) => (
-                  <tr key={item.id} className="align-middle">
-                    <td className="px-4 py-5 align-middle">
-                      <button
-                        type="button"
-                        aria-label={item.starred ? 'Unstar application' : 'Star application'}
-                        onClick={() => toggleStar(item.id)}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${item.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100' : 'border-slate-200 bg-white text-slate-300 hover:bg-slate-50 hover:text-amber-400'}`}
-                      >
-                        {item.starred ? '★' : '☆'}
+              ) : filtered.map((item) => (
+                <tr key={item.id} className="align-middle">
+                  <td className="px-4 py-5 align-middle">
+                    <button
+                      type="button"
+                      aria-label={item.starred ? 'Unstar application' : 'Star application'}
+                      onClick={() => toggleStar(item.id)}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${item.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100' : 'border-slate-200 bg-white text-slate-300 hover:bg-slate-50 hover:text-amber-400'}`}
+                    >
+                      {item.starred ? '★' : '☆'}
+                    </button>
+                  </td>
+                  <td className="px-5 py-5 align-middle">
+                    <div className="min-w-0 font-medium text-slate-950">{item.company}</div>
+                    <div className="mt-1 text-sm text-slate-500 md:hidden">{item.program}</div>
+                  </td>
+                  <td className="px-5 py-5 align-middle">
+                    <div className="min-w-0 text-sm text-slate-700">{item.program}</div>
+                  </td>
+                  <td className="px-5 py-5 align-middle">
+                    <div className="inline-flex items-center"><StatusBadge status={item.status} /></div>
+                  </td>
+                  <td className="px-5 py-5 align-middle">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => { setSelectedApplication(item); setActiveDetailField(null); }} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        Details
                       </button>
-                    </td>
-                    <td className="px-5 py-5 align-middle">
-                      <div className="min-w-0 font-medium text-slate-950">{item.company}</div>
-                      <div className="mt-1 text-sm text-slate-500 md:hidden">{item.program}</div>
-                    </td>
-                    <td className="px-5 py-5 align-middle">
-                      <div className="min-w-0 text-sm text-slate-700">{item.program}</div>
-                    </td>
-                    <td className="px-5 py-5 align-middle">
-                      <div className="inline-flex items-center"><StatusBadge status={item.status} /></div>
-                    </td>
-                    <td className="px-5 py-5 align-middle">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => setSelectedApplication(item)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                          Details
+                      <div className="relative">
+                        <button
+                          type="button"
+                          aria-label="Open actions menu"
+                          aria-expanded={openMenuId === item.id}
+                          onClick={() => setOpenMenuId((current) => (current === item.id ? null : item.id))}
+                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-lg font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          ⋯
                         </button>
-                        <button onClick={() => { setEditing(item); setIsFormOpen(true); }} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                          Edit
-                        </button>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            aria-label="Open actions menu"
-                            aria-expanded={openMenuId === item.id}
-                            onClick={() => setOpenMenuId((current) => (current === item.id ? null : item.id))}
-                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-lg font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            ⋯
-                          </button>
-                          {openMenuId === item.id ? (
-                            <div className="absolute right-0 top-full z-10 mt-2 w-36 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-                              <button
-                                type="button"
-                                onClick={() => removeApplication(item.id)}
-                                className="w-full rounded-xl border border-rose-200 px-3 py-2 text-left text-sm font-medium text-rose-700 hover:bg-rose-50"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
+                        {openMenuId === item.id ? (
+                          <div className="absolute bottom-full right-0 z-10 mb-2 w-36 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => removeApplication(item.id)}
+                              className="w-full rounded-xl border border-rose-200 px-3 py-2 text-left text-sm font-medium text-rose-700 hover:bg-rose-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
       <ApplicationForm
         open={isFormOpen}
-        initial={editing}
         onClose={() => {
           setIsFormOpen(false);
-          setEditing(null);
         }}
         onSave={saveApplication}
       />
@@ -299,30 +310,94 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Company</div>
-                <div className="mt-1 text-sm font-medium text-slate-950">{selectedApplication.company}</div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Program</div>
-                <div className="mt-1 text-sm font-medium text-slate-950">{selectedApplication.program}</div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Status</div>
-                <div className="mt-1 text-sm font-medium text-slate-950"><StatusBadge status={selectedApplication.status} /></div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Work type</div>
-                <div className="mt-1 text-sm font-medium text-slate-950">{selectedApplication.workType}</div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Application date</div>
-                <div className="mt-1 text-sm font-medium text-slate-950">{selectedApplication.applicationDate}</div>
-              </div>
-              <div className="sm:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs uppercase tracking-wide text-slate-500">Notes</div>
-                <div className="mt-1 text-sm leading-6 text-slate-700">{selectedApplication.notes || 'No notes yet.'}</div>
-              </div>
+              {DETAIL_FIELDS.map((field) => {
+                const isActive = activeDetailField === field.key;
+                const value = selectedApplication[field.key];
+
+                return (
+                  <div
+                    key={field.key}
+                    className={`rounded-2xl border p-4 transition ${isActive ? 'border-indigo-300 bg-indigo-50 ring-4 ring-indigo-100' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}
+                    onClick={() => setActiveDetailField(field.key)}
+                  >
+                    <div className="mb-2 text-xs uppercase tracking-wide text-slate-500">{field.label}</div>
+
+                    {field.type === 'text' && isActive ? (
+                      <input
+                        autoFocus
+                        value={String(value)}
+                        onChange={(e) => updateSelectedApplication({ [field.key]: e.target.value } as Partial<Application>)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      />
+                    ) : null}
+
+                    {field.type === 'select' && isActive && field.key === 'status' ? (
+                      <select
+                        autoFocus
+                        value={selectedApplication.status}
+                        onChange={(e) => updateSelectedApplication({ status: e.target.value as ApplicationStatus })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      >
+                        {STATUS_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : null}
+
+                    {field.type === 'select' && isActive && field.key === 'workType' ? (
+                      <select
+                        autoFocus
+                        value={selectedApplication.workType}
+                        onChange={(e) => updateSelectedApplication({ workType: e.target.value as WorkType })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      >
+                        {WORK_TYPE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : null}
+
+                    {field.type === 'date' && isActive ? (
+                      <input
+                        autoFocus
+                        type="date"
+                        value={selectedApplication.applicationDate}
+                        onChange={(e) => updateSelectedApplication({ applicationDate: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      />
+                    ) : null}
+
+                    {field.type === 'textarea' && isActive ? (
+                      <textarea
+                        autoFocus
+                        rows={4}
+                        value={selectedApplication.notes}
+                        onChange={(e) => updateSelectedApplication({ notes: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      />
+                    ) : null}
+
+                    {!isActive ? (
+                      <div className="text-sm font-medium text-slate-950">
+                        {field.key === 'status' ? <StatusBadge status={selectedApplication.status} /> : null}
+                        {field.key !== 'status' && field.key !== 'notes' ? String(value) : null}
+                        {field.key === 'notes' ? <div className="whitespace-pre-wrap leading-6 text-slate-700">{String(value || 'No notes yet.')}</div> : null}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-xs text-indigo-600">Editing</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button onClick={closeDetails} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Close
+              </button>
+              <button onClick={saveDetails} className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                Save
+              </button>
             </div>
           </div>
         </div>

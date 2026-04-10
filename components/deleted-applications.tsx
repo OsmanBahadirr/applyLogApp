@@ -2,24 +2,24 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { StatusBadge } from './status-badge';
 import type { Application } from '@/lib/types';
 
 export function DeletedApplications({ initialApplications, initialDeletedApplications }: { initialApplications: Application[]; initialDeletedApplications: Application[] }) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [deletedApplications, setDeletedApplications] = useState<Application[]>(initialDeletedApplications);
+  const router = useRouter();
 
-  const persistState = (nextApplications: Application[], nextDeletedApplications: Application[]) => {
-    fetch('/api/applications', {
+  const persistState = async (nextApplications: Application[], nextDeletedApplications: Application[]) => {
+    await fetch('/api/applications', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ applications: nextApplications, deletedApplications: nextDeletedApplications }),
-    }).catch(() => {
-      // Keep the UI responsive even if persistence fails.
     });
   };
 
-  const restoreApplication = (id: number) => {
+  const restoreApplication = async (id: number) => {
     const item = deletedApplications.find((entry) => entry.id === id);
     if (!item) return;
 
@@ -28,7 +28,14 @@ export function DeletedApplications({ initialApplications, initialDeletedApplica
 
     setDeletedApplications(nextDeletedApplications);
     setApplications(nextApplications);
-    persistState(nextApplications, nextDeletedApplications);
+
+    try {
+      await persistState(nextApplications, nextDeletedApplications);
+      router.push('/');
+      router.refresh();
+    } catch {
+      // Keep the UI responsive even if persistence fails.
+    }
   };
 
   return (

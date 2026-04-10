@@ -8,9 +8,6 @@ export type ApplicationStatus =
 
 export type WorkType =
   | 'Bootcamp'
-  | 'On-site'
-  | 'Hybrid'
-  | 'Remote'
   | 'Internship'
   | 'Full-time'
   | 'Part-time';
@@ -42,9 +39,6 @@ export const STATUS_OPTIONS: ApplicationStatus[] = [
 
 export const WORK_TYPE_OPTIONS: WorkType[] = [
   'Bootcamp',
-  'On-site',
-  'Hybrid',
-  'Remote',
   'Internship',
   'Full-time',
   'Part-time',
