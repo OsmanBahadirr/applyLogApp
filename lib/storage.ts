@@ -1,0 +1,27 @@
+import seedApplications from '@/data/applications.json';
+import type { Application } from './types';
+
+const STORAGE_KEY = 'jobcodex.applications';
+
+export function getSeedApplications(): Application[] {
+  return seedApplications as Application[];
+}
+
+export function loadApplications(): Application[] {
+  if (typeof window === 'undefined') return getSeedApplications();
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return getSeedApplications();
+
+    const parsed = JSON.parse(raw) as Application[];
+    return Array.isArray(parsed) ? parsed : getSeedApplications();
+  } catch {
+    return getSeedApplications();
+  }
+}
+
+export function saveApplications(applications: Application[]) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
+}
