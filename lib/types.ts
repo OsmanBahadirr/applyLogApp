@@ -1,10 +1,10 @@
 export type ApplicationStatus =
   | 'Applied'
+  | 'Test Phase'
   | 'Interviewing'
   | 'Rejected'
   | 'Accepted'
-  | 'No Response'
-  | 'Test Phase';
+  | 'No Response';
 
 export type WorkType =
   | 'Bootcamp'
@@ -30,11 +30,12 @@ export type DashboardState = {
 
 export const STATUS_OPTIONS: ApplicationStatus[] = [
   'Applied',
+  'Test Phase',
   'Interviewing',
   'Rejected',
   'Accepted',
   'No Response',
-  'Test Phase',
+  
 ];
 
 export const WORK_TYPE_OPTIONS: WorkType[] = [

@@ -6,6 +6,10 @@
   color-scheme: light;
 }
 
+:root.dark {
+  color-scheme: dark;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -16,6 +20,13 @@ body {
     radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 30%),
     linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
   color: #0f172a;
+}
+
+:root.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 30%),
+    linear-gradient(180deg, #020617 0%, #111827 100%);
+  color: #e2e8f0;
 }
 
 * {
