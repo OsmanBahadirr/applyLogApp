@@ -15,7 +15,7 @@ function getTodayDate() {
 const emptyForm: FormState = {
   company: '',
   program: '',
-  workType: 'Remote' as WorkType,
+  workType: 'Internship' as WorkType,
   status: 'Applied' as ApplicationStatus,
   applicationDate: getTodayDate(),
   notes: '',

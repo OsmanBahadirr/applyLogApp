@@ -7,11 +7,10 @@ export type ApplicationStatus =
   | 'No Response';
 
 export type WorkType =
-  | 'Bootcamp'
-  | 'Internship'
   | 'Full-time'
   | 'Part-time'
-  | 'Remote';
+  | 'Internship'
+  | 'Bootcamp';
 
 export type Application = {
   id: number;
@@ -40,9 +39,8 @@ export const STATUS_OPTIONS: ApplicationStatus[] = [
 ];
 
 export const WORK_TYPE_OPTIONS: WorkType[] = [
-  'Bootcamp',
-  'Internship',
   'Full-time',
   'Part-time',
-  'Remote',
+  'Internship',
+  'Bootcamp',
 ];
