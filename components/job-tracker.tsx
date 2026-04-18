@@ -139,11 +139,26 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     setIsFormOpen(true);
   };
 
-  const saveApplication = (payload: Omit<Application, 'id' | 'starred'>) => {
-    const nextId = Math.max(0, ...applications.map((item) => item.id), ...deletedApplications.map((item) => item.id)) + 1;
-    const nextApplications = [{ id: nextId, starred: false, ...payload }, ...applications];
-    setApplications(nextApplications);
-    persistState(nextApplications, deletedApplications);
+  const saveApplication = async (payload: Omit<Application, 'id' | 'starred'>) => {
+    const response = await fetch('/api/applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const result = (await response.json()) as { application?: Application };
+
+    const createdApplication = result.application;
+
+    if (!createdApplication) {
+      return;
+    }
+
+    setApplications((current) => [createdApplication, ...current.filter((item) => item.id !== createdApplication.id)]);
     setIsFormOpen(false);
   };
 

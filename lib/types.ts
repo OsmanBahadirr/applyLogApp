@@ -10,7 +10,8 @@ export type WorkType =
   | 'Bootcamp'
   | 'Internship'
   | 'Full-time'
-  | 'Part-time';
+  | 'Part-time'
+  | 'Remote';
 
 export type Application = {
   id: number;
@@ -43,4 +44,5 @@ export const WORK_TYPE_OPTIONS: WorkType[] = [
   'Internship',
   'Full-time',
   'Part-time',
+  'Remote',
 ];
