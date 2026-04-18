@@ -44,26 +44,26 @@ export function DeletedApplications({ initialApplications, initialDeletedApplica
       <section className="rounded-[2rem] border border-white/60 bg-white/75 p-5 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/75 sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-cyan-300">Silinenler</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">Geri alınabilir başvurular</h1>
-            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">Silinen kayıtları burada tutabilir ve tek tıkla geri alabilirsin.</p>
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-cyan-300">Deleted</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">Recoverable applications</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">Keep deleted records here and restore them with one click.</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link href="/" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
-              Ana sayfa
+              Home
             </Link>
             <ThemeToggle />
           </div>
         </div>
 
         <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-          {deletedApplications.length} silinmiş kayıt
+          {deletedApplications.length} deleted records
         </div>
 
         <div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-950">
           {deletedApplications.length === 0 ? (
-            <div className="px-6 py-14 text-center text-sm text-slate-500 dark:text-slate-400">Silinen başvuru yok.</div>
+            <div className="px-6 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No deleted applications.</div>
           ) : deletedApplications.map((item) => (
             <div key={item.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -76,7 +76,7 @@ export function DeletedApplications({ initialApplications, initialDeletedApplica
                 onClick={() => restoreApplication(item.id)}
                 className="inline-flex items-center justify-center rounded-xl border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-200 dark:hover:bg-emerald-950"
               >
-                Geri al
+                Restore
               </button>
             </div>
           ))}

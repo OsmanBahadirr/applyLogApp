@@ -84,7 +84,7 @@ export function ThemeToggle() {
             onClick={toggleTheme}
             className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            <span>Koyu mod</span>
+            <span>Dark mode</span>
             <span className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === 'dark' ? 'bg-cyan-400' : 'bg-slate-200 dark:bg-slate-700'}`} aria-hidden="true">
               <span className={`h-4 w-4 rounded-full bg-white shadow transition ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
             </span>
@@ -93,12 +93,12 @@ export function ThemeToggle() {
           <div className="my-2 h-px bg-slate-200 dark:bg-slate-700" />
 
           <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-            <span>Profil</span>
-            <span className="text-xs">Yakında</span>
+            <span>Profile</span>
+            <span className="text-xs">Soon</span>
           </div>
           <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-            <span>Ayarlar</span>
-            <span className="text-xs">Yakında</span>
+            <span>Settings</span>
+            <span className="text-xs">Soon</span>
           </div>
         </div>
       ) : null}

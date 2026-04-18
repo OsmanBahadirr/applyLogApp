@@ -221,7 +221,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
 
           <div className="flex flex-wrap gap-3">
             <Link href="/deleted" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
-              Silinenler ({deletedApplications.length})
+              Deleted ({deletedApplications.length})
             </Link>
             <button onClick={openCreate} className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
               Add application
