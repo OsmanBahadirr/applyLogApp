@@ -3,6 +3,11 @@ import { getDashboardState, saveDashboardState } from '@/lib/application-store';
 import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
 
 type CreateApplicationPayload = Omit<Application, 'id' | 'starred'>;
+type ExistingApplicationResult = {
+  exists: boolean;
+  application: Application | null;
+  deleted: boolean;
+};
 
 const statusValues = new Set<string>(STATUS_OPTIONS);
 const workTypeValues = new Set<string>(WORK_TYPE_OPTIONS);
@@ -86,8 +91,67 @@ function getNextApplicationId(applications: Application[], deletedApplications: 
   ) + 1;
 }
 
-export async function GET() {
-  return NextResponse.json(await getDashboardState());
+function normalizeLookupValue(value: unknown) {
+  return typeof value === 'string'
+    ? value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR')
+    : '';
+}
+
+function findExistingApplication(
+  applications: Application[],
+  deletedApplications: Application[],
+  company: string,
+  program: string,
+): ExistingApplicationResult {
+  const companyKey = normalizeLookupValue(company);
+  const programKey = normalizeLookupValue(program);
+  const matchesApplication = (application: Application) => (
+    normalizeLookupValue(application.company) === companyKey
+    && normalizeLookupValue(application.program) === programKey
+  );
+
+  const activeMatch = applications.find(matchesApplication);
+
+  if (activeMatch) {
+    return {
+      exists: true,
+      application: activeMatch,
+      deleted: false,
+    };
+  }
+
+  const deletedMatch = deletedApplications.find(matchesApplication);
+
+  return {
+    exists: Boolean(deletedMatch),
+    application: deletedMatch ?? null,
+    deleted: Boolean(deletedMatch),
+  };
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const company = url.searchParams.get('company');
+  const program = url.searchParams.get('program');
+  const state = await getDashboardState();
+
+  if (company !== null || program !== null) {
+    const normalizedCompany = typeof company === 'string' ? company.trim() : '';
+    const normalizedProgram = typeof program === 'string' ? program.trim() : '';
+
+    if (!normalizedCompany || !normalizedProgram) {
+      return NextResponse.json({ error: 'Company and program are required for application lookup' }, { status: 400 });
+    }
+
+    return NextResponse.json(findExistingApplication(
+      state.applications,
+      state.deletedApplications,
+      normalizedCompany,
+      normalizedProgram,
+    ));
+  }
+
+  return NextResponse.json(state);
 }
 
 export async function POST(request: Request) {

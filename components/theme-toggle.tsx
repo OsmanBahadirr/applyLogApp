@@ -89,17 +89,6 @@ export function ThemeToggle() {
               <span className={`h-4 w-4 rounded-full bg-white shadow transition ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0'}`} />
             </span>
           </button>
-
-          <div className="my-2 h-px bg-slate-200 dark:bg-slate-700" />
-
-          <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-            <span>Profile</span>
-            <span className="text-xs">Soon</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-            <span>Settings</span>
-            <span className="text-xs">Soon</span>
-          </div>
         </div>
       ) : null}
     </div>
