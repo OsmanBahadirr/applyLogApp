@@ -1,10 +1,8 @@
 export type ApplicationStatus =
-  | 'Applied'
-  | 'Test Phase'
-  | 'Interviewing'
-  | 'Rejected'
-  | 'Accepted'
-  | 'No Response';
+  | 'Submitted'
+  | 'Interview'
+  | 'Offer'
+  | 'Rejected';
 
 export type WorkType =
   | 'Full-time'
@@ -29,13 +27,10 @@ export type DashboardState = {
 };
 
 export const STATUS_OPTIONS: ApplicationStatus[] = [
-  'Applied',
-  'Test Phase',
-  'Interviewing',
+  'Submitted',
+  'Interview',
+  'Offer',
   'Rejected',
-  'Accepted',
-  'No Response',
-  
 ];
 
 export const WORK_TYPE_OPTIONS: WorkType[] = [
@@ -43,4 +38,11 @@ export const WORK_TYPE_OPTIONS: WorkType[] = [
   'Part-time',
   'Internship',
   'Bootcamp',
+];
+
+export const WORK_TYPE_DETAILS: Array<{ type: WorkType; icon: string; description: string }> = [
+  { type: 'Full-time', icon: '💼', description: 'Standard 40-hour work week' },
+  { type: 'Part-time', icon: '⏰', description: 'Less than 40 hours per week' },
+  { type: 'Internship', icon: '🎓', description: 'Temporary position for students' },
+  { type: 'Bootcamp', icon: '🚀', description: 'Training program with job placement' },
 ];

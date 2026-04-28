@@ -41,34 +41,34 @@ export function DeletedApplications({ initialApplications, initialDeletedApplica
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <section className="rounded-[2rem] border border-white/60 bg-white/75 p-5 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/75 sm:p-8">
+      <section className="rounded-[2rem] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-soft backdrop-blur-sm sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500 dark:text-cyan-300">Deleted</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">Recoverable applications</h1>
-            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">Keep deleted records here and restore them with one click.</p>
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-[color:var(--theme-accent)]">Deleted</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[color:var(--theme-text)] sm:text-4xl">Recoverable applications</h1>
+            <p className="mt-3 text-sm leading-6 text-[color:var(--theme-text-muted)]">Keep deleted records here and restore them with one click.</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link href="/" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+            <Link href="/" className="inline-flex items-center justify-center rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-5 py-3 text-sm font-medium text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]">
               Home
             </Link>
             <ThemeToggle />
           </div>
         </div>
 
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        <div className="mt-6 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] px-4 py-3 text-sm text-[color:var(--theme-text-muted)]">
           {deletedApplications.length} deleted records
         </div>
 
-        <div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-950">
+        <div className="mt-6 divide-y divide-[color:var(--theme-border)] overflow-hidden rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)]">
           {deletedApplications.length === 0 ? (
-            <div className="px-6 py-14 text-center text-sm text-slate-500 dark:text-slate-400">No deleted applications.</div>
+            <div className="px-6 py-14 text-center text-sm text-[color:var(--theme-text-muted)]">No deleted applications.</div>
           ) : deletedApplications.map((item) => (
             <div key={item.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="font-medium text-slate-950 dark:text-slate-50">{item.company}</div>
-                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.program}</div>
+                <div className="font-medium text-[color:var(--theme-text)]">{item.company}</div>
+                <div className="mt-1 text-sm text-[color:var(--theme-text-muted)]">{item.program}</div>
                 <div className="mt-2"><StatusBadge status={item.status} /></div>
               </div>
               <button

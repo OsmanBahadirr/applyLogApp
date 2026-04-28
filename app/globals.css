@@ -2,12 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fade-out {
+  animation: fadeOut 0.2s ease-in;
+}
+
 :root {
   color-scheme: light;
+  --theme-surface-0: #f8fafc;
+  --theme-surface-1: #eef2ff;
+  --theme-surface-2: #e2e8f0;
+  --theme-text: #0f172a;
+  --theme-text-muted: #64748b;
+  --theme-border: rgba(148, 163, 184, 0.35);
+  --theme-border-strong: rgba(148, 163, 184, 0.6);
+  --theme-accent: #4f46e5;
+  --theme-accent-strong: #4338ca;
+  --theme-accent-soft: rgba(99, 102, 241, 0.2);
+  --theme-glow: rgba(99, 102, 241, 0.16);
+  --theme-glow-soft: rgba(99, 102, 241, 0.12);
+  --theme-overlay: rgba(15, 23, 42, 0.35);
+  --theme-card: rgba(255, 255, 255, 0.75);
+  --theme-card-strong: rgba(255, 255, 255, 0.9);
+  --theme-focus: #4f46e5;
 }
 
 :root.dark {
   color-scheme: dark;
+  --theme-surface-0: #020617;
+  --theme-surface-1: #0f172a;
+  --theme-surface-2: #111827;
+  --theme-text: #e2e8f0;
+  --theme-text-muted: #94a3b8;
+  --theme-border: rgba(71, 85, 105, 0.55);
+  --theme-border-strong: rgba(71, 85, 105, 0.9);
+  --theme-accent: #22d3ee;
+  --theme-accent-strong: #06b6d4;
+  --theme-accent-soft: rgba(34, 211, 238, 0.2);
+  --theme-glow: rgba(45, 212, 191, 0.2);
+  --theme-glow-soft: rgba(45, 212, 191, 0.12);
+  --theme-overlay: rgba(2, 6, 23, 0.55);
+  --theme-card: rgba(2, 6, 23, 0.75);
+  --theme-card-strong: rgba(15, 23, 42, 0.85);
+  --theme-focus: #22d3ee;
 }
 
 html {
@@ -17,16 +79,9 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 30%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-  color: #0f172a;
-}
-
-:root.dark body {
-  background:
-    radial-gradient(circle at top left, rgba(45, 212, 191, 0.12), transparent 30%),
-    linear-gradient(180deg, #020617 0%, #111827 100%);
-  color: #e2e8f0;
+    radial-gradient(circle at top left, var(--theme-glow-soft), transparent 32%),
+    linear-gradient(180deg, var(--theme-surface-0) 0%, var(--theme-surface-1) 100%);
+  color: var(--theme-text);
 }
 
 * {
@@ -34,5 +89,22 @@ body {
 }
 
 ::selection {
-  background: rgba(99, 102, 241, 0.2);
+  background: var(--theme-accent-soft);
+}
+
+::placeholder {
+  color: var(--theme-text-muted);
+}
+
+:root.theme-mocha body {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--theme-glow) 40%, transparent), transparent 32%),
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--theme-glow-soft) 55%, transparent), transparent 38%),
+    linear-gradient(160deg, var(--theme-surface-0) 0%, var(--theme-surface-1) 55%, var(--theme-surface-2) 100%);
+}
+
+:root.theme-frappe body {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--theme-glow) 30%, transparent), transparent 35%),
+    linear-gradient(170deg, var(--theme-surface-0) 0%, var(--theme-surface-1) 65%, var(--theme-surface-2) 100%);
 }

@@ -20,10 +20,17 @@ export default function RootLayout({
             __html: `
               try {
                 var theme = localStorage.getItem('theme');
-                if (theme === 'dark') {
+                var appearance = theme === 'mocha' || theme === 'dark' ? 'dark' : 'light';
+                if (appearance === 'dark') {
                   document.documentElement.classList.add('dark');
-                  document.documentElement.style.colorScheme = 'dark';
                 }
+                if (theme === 'mocha') {
+                  document.documentElement.classList.add('theme-mocha');
+                }
+                if (theme === 'frappe') {
+                  document.documentElement.classList.add('theme-frappe');
+                }
+                document.documentElement.style.colorScheme = appearance;
               } catch {}
             `,
           }}

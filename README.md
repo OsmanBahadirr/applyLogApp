@@ -25,8 +25,8 @@ Content-Type: application/json
   "company": "Example Inc.",
   "program": "Frontend Developer",
   "workType": "Full-time",
-  "status": "Applied",
+  "status": "Submitted",
   "applicationDate": "2026-04-18",
-  "notes": "Applied from careers page."
+  "notes": "Submitted from careers page."
 }
 ```
