@@ -40,9 +40,9 @@ export const WORK_TYPE_OPTIONS: WorkType[] = [
   'Bootcamp',
 ];
 
-export const WORK_TYPE_DETAILS: Array<{ type: WorkType; icon: string; description: string }> = [
-  { type: 'Full-time', icon: '💼', description: 'Standard 40-hour work week' },
-  { type: 'Part-time', icon: '⏰', description: 'Less than 40 hours per week' },
-  { type: 'Internship', icon: '🎓', description: 'Temporary position for students' },
-  { type: 'Bootcamp', icon: '🚀', description: 'Training program with job placement' },
+export const WORK_TYPE_DETAILS: Array<{ type: WorkType; description: string }> = [
+  { type: 'Full-time', description: 'Standard 40-hour work week' },
+  { type: 'Part-time', description: 'Less than 40 hours per week' },
+  { type: 'Internship', description: 'Temporary position for students' },
+  { type: 'Bootcamp', description: 'Training program with job placement' },
 ];

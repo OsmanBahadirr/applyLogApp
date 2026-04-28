@@ -442,10 +442,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
               aria-haspopup="listbox"
               aria-expanded={isWorkFilterOpen}
             >
-              <span className="flex items-center gap-2">
-                {workFilter === 'All' ? '🔍' : WORK_TYPE_DETAILS.find((d) => d.type === workFilter)?.icon}
-                <span>{workFilter === 'All' ? 'All work types' : workFilter}</span>
-              </span>
+              <span>{workFilter === 'All' ? 'All work types' : workFilter}</span>
               <span className="text-[color:var(--theme-text-muted)]" aria-hidden="true">{isWorkFilterOpen ? '↑' : '↓'}</span>
             </button>
 
@@ -456,7 +453,6 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                   onClick={() => { setWorkFilter('All'); setIsWorkFilterOpen(false); }}
                   className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)] ${workFilter === 'All' ? 'bg-[color:var(--theme-accent-soft)]' : ''}`}
                 >
-                  <span>🔍</span>
                   <span>All work types</span>
                   {workFilter === 'All' ? <span className="ml-auto text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
                 </button>
@@ -471,7 +467,6 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                       onClick={() => { setWorkFilter(detail.type); setIsWorkFilterOpen(false); }}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)] ${isSelected ? 'bg-[color:var(--theme-accent-soft)]' : ''}`}
                     >
-                      <span>{detail.icon}</span>
                       <div className="flex-1">
                         <div className="font-medium">{detail.type}</div>
                         <div className="text-xs text-[color:var(--theme-text-muted)]">{detail.description}</div>
