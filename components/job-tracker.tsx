@@ -64,7 +64,7 @@ function ColumnDropZone({ id, children }: { id: ApplicationStatus; children: Rea
   return (
     <div
       ref={ref}
-      className={`flex min-h-[200px] flex-col gap-3 rounded-3xl border px-4 py-4 transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'}`}
+      className={`flex h-[400px] flex-col gap-3 rounded-3xl border px-4 py-4 overflow-y-auto transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'}`}
     >
       {children}
     </div>
@@ -446,7 +446,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             <div className="mt-6 grid gap-4 lg:grid-cols-4">
               {boardColumns.map((column) => (
                 <div key={column.id} className="flex flex-col gap-3">
-                  <div className="rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-4">
+                  <div className="h-20 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--theme-text)]">{column.label}</div>
