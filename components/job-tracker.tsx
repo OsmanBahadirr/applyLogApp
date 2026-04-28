@@ -77,7 +77,7 @@ function DraggableCard({ application, onStar, onDetails, onDelete }: {
   onDetails: () => void;
   onDelete: () => void;
 }) {
-  const { ref, handleRef, isDragging } = useDraggable({ id: application.id, data: { status: application.status } });
+  const { ref, isDragging } = useDraggable({ id: application.id, data: { status: application.status } });
 
   return (
     <div
@@ -89,14 +89,6 @@ function DraggableCard({ application, onStar, onDetails, onDelete }: {
           <div className="text-sm font-semibold text-[color:var(--theme-text)]">{application.company}</div>
           <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">{application.program}</div>
         </div>
-        <button
-          type="button"
-          ref={handleRef}
-          aria-label="Drag application"
-          className="rounded-full border border-[color:var(--theme-border)] px-2 py-1 text-xs text-[color:var(--theme-text-muted)] transition hover:bg-[color:var(--theme-surface-1)]"
-        >
-          Drag
-        </button>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
