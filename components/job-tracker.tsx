@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApplicationForm } from './application-form';
 import { StatusBadge } from './status-badge';
 import { ThemeToggle } from './theme-toggle';
-import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
+import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
 
 type WorkFilterValue = 'All' | WorkType;
 type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationDate' | 'notes';
@@ -129,6 +129,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [statusFilters, setStatusFilters] = useState<ApplicationStatus[]>([]);
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [workFilter, setWorkFilter] = useState<WorkFilterValue>('All');
+  const [isWorkFilterOpen, setIsWorkFilterOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [activeDetailField, setActiveDetailField] = useState<DetailField | null>(null);
@@ -136,7 +137,20 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
+  const workFilterRef = useRef<HTMLDivElement | null>(null);
+
+  const handleViewChange = (newMode: ViewMode) => {
+    if (newMode === viewMode || isTransitioning) return;
+    
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setViewMode(newMode);
+      setIsTransitioning(false);
+    }, 200);
+  };
 
   useEffect(() => {
     if (!isStatusFilterOpen) return;
@@ -161,6 +175,30 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [isStatusFilterOpen]);
+
+  useEffect(() => {
+    if (!isWorkFilterOpen) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!workFilterRef.current?.contains(event.target as Node)) {
+        setIsWorkFilterOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsWorkFilterOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isWorkFilterOpen]);
 
   const persistState = (nextApplications: Application[], nextDeletedApplications: Application[]) => {
     fetch('/api/applications', {
@@ -395,32 +433,78 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             ) : null}
           </div>
 
-          <select value={workFilter} onChange={(e) => setWorkFilter(e.target.value as WorkFilterValue)} className="w-full rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]">
-            <option value="All">All work types</option>
-            {WORK_TYPE_OPTIONS.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+          <div ref={workFilterRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsWorkFilterOpen((current) => !current)}
+              className="flex w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+              aria-haspopup="listbox"
+              aria-expanded={isWorkFilterOpen}
+            >
+              <span className="flex items-center gap-2">
+                {workFilter === 'All' ? '🔍' : WORK_TYPE_DETAILS.find((d) => d.type === workFilter)?.icon}
+                <span>{workFilter === 'All' ? 'All work types' : workFilter}</span>
+              </span>
+              <span className="text-[color:var(--theme-text-muted)]" aria-hidden="true">{isWorkFilterOpen ? '↑' : '↓'}</span>
+            </button>
+
+            {isWorkFilterOpen ? (
+              <div className="absolute left-0 right-0 z-20 mt-2 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-xl shadow-slate-900/10">
+                <button
+                  type="button"
+                  onClick={() => { setWorkFilter('All'); setIsWorkFilterOpen(false); }}
+                  className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)] ${workFilter === 'All' ? 'bg-[color:var(--theme-accent-soft)]' : ''}`}
+                >
+                  <span>🔍</span>
+                  <span>All work types</span>
+                  {workFilter === 'All' ? <span className="ml-auto text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
+                </button>
+
+                {WORK_TYPE_DETAILS.map((detail) => {
+                  const isSelected = workFilter === detail.type;
+
+                  return (
+                    <button
+                      key={detail.type}
+                      type="button"
+                      onClick={() => { setWorkFilter(detail.type); setIsWorkFilterOpen(false); }}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)] ${isSelected ? 'bg-[color:var(--theme-accent-soft)]' : ''}`}
+                    >
+                      <span>{detail.icon}</span>
+                      <div className="flex-1">
+                        <div className="font-medium">{detail.type}</div>
+                        <div className="text-xs text-[color:var(--theme-text-muted)]">{detail.description}</div>
+                      </div>
+                      {isSelected ? <span className="text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
 
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2">
             <button
               type="button"
-              onClick={() => setViewMode('board')}
-              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'board' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'}`}
+              onClick={() => handleViewChange('board')}
+              disabled={isTransitioning}
+              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'board' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'} ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Kanban
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('list')}
-              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'list' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'}`}
+              onClick={() => handleViewChange('list')}
+              disabled={isTransitioning}
+              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'list' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'} ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               List
             </button>
           </div>
         </div>
 
-        {viewMode === 'board' ? (
+        <div className={`mt-6 ${isTransitioning ? 'animate-fade-out' : 'animate-fade-in'}`}>
+          {viewMode === 'board' ? (
           <DragDropProvider
             onDragStart={({ operation }) => {
               const sourceId = operation?.source?.id;
@@ -578,7 +662,8 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
               </tbody>
             </table>
           </div>
-        )}
+          )}
+        </div>
       </section>
 
       <ApplicationForm
