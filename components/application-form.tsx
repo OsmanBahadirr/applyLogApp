@@ -16,7 +16,7 @@ const emptyForm: FormState = {
   company: '',
   program: '',
   workType: 'Internship' as WorkType,
-  status: 'Submitted' as ApplicationStatus,
+  status: 'Applied' as ApplicationStatus,
   applicationDate: getTodayDate(),
   notes: '',
 };

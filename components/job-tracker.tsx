@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApplicationForm } from './application-form';
 import { StatusBadge } from './status-badge';
 import { ThemeToggle } from './theme-toggle';
+import { statusBadgeStyles, statusDotStyles, statusSurfaceStyles } from '@/lib/status-styles';
 import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
 
 type WorkFilterValue = 'All' | WorkType;
@@ -19,12 +20,12 @@ type KanbanColumn = {
   description: string;
 };
 
-const STATUS_ORDER: ApplicationStatus[] = ['Submitted', 'Interview', 'Offer', 'Rejected'];
+const STATUS_ORDER: ApplicationStatus[] = ['Applied', 'Test Phase', 'No Response', 'Rejected'];
 
 const KANBAN_COLUMNS: KanbanColumn[] = [
-  { id: 'Submitted', label: 'Submitted', description: 'Applications sent and awaiting response.' },
-  { id: 'Interview', label: 'Interview', description: 'Recruiter screens and interview loops.' },
-  { id: 'Offer', label: 'Offer', description: 'Offers and final negotiations.' },
+  { id: 'Applied', label: 'Applied', description: 'Applications sent and awaiting the next step.' },
+  { id: 'Test Phase', label: 'Test Phase', description: 'Assignments, exams, and screening steps in progress.' },
+  { id: 'No Response', label: 'No Response', description: 'Applications that have gone quiet with no follow-up yet.' },
   { id: 'Rejected', label: 'Rejected', description: 'Closed out or declined applications.' },
 ];
 
@@ -41,10 +42,7 @@ const DETAIL_FIELDS: Array<{ key: DetailField; label: string; type: 'text' | 'se
 
 const STAT_CARD_STYLES: Record<string, string> = {
   'Total applications': 'border-slate-200 bg-slate-50 text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50',
-  Submitted: 'border-slate-200 bg-slate-50 text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50',
-  Interview: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100',
-  Offer: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100',
-  Rejected: 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
+  ...statusSurfaceStyles,
 };
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -238,9 +236,9 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     const count = (status: ApplicationStatus) => applications.filter((item) => item.status === status).length;
     return {
       total: applications.length,
-      submitted: count('Submitted'),
-      interview: count('Interview'),
-      offer: count('Offer'),
+      applied: count('Applied'),
+      testPhase: count('Test Phase'),
+      noResponse: count('No Response'),
       rejected: count('Rejected'),
     };
   }, [applications]);
@@ -377,25 +375,25 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard label="Total applications" value={summary.total} />
-          <StatCard label="Submitted" value={summary.submitted} />
-          <StatCard label="Interview" value={summary.interview} />
-          <StatCard label="Offer" value={summary.offer} />
+          <StatCard label="Applied" value={summary.applied} />
+          <StatCard label="Test Phase" value={summary.testPhase} />
+          <StatCard label="No Response" value={summary.noResponse} />
           <StatCard label="Rejected" value={summary.rejected} />
         </div>
 
-        <div className="mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+        <div className="mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search company or program"
-            className="w-full rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+            className="h-12 w-full rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
           />
 
           <div ref={statusFilterRef} className="relative">
             <button
               type="button"
               onClick={() => setIsStatusFilterOpen((current) => !current)}
-              className="flex w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+              className="flex h-12 w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
               aria-haspopup="listbox"
               aria-expanded={isStatusFilterOpen}
             >
@@ -425,7 +423,10 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                         onChange={() => toggleStatusFilter(option)}
                         className="h-4 w-4 rounded border-slate-300 text-[color:var(--theme-accent)] focus:ring-[color:var(--theme-focus)]"
                       />
-                      <span>{option}</span>
+                      <span className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${statusDotStyles[option]}`} aria-hidden="true" />
+                        <span>{option}</span>
+                      </span>
                     </label>
                   );
                 })}
@@ -437,7 +438,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             <button
               type="button"
               onClick={() => setIsWorkFilterOpen((current) => !current)}
-              className="flex w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+              className="flex h-12 w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
               aria-haspopup="listbox"
               aria-expanded={isWorkFilterOpen}
             >
@@ -483,12 +484,12 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             ) : null}
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2">
+          <div className="flex h-12 items-center justify-between gap-2 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-1">
             <button
               type="button"
               onClick={() => handleViewChange('board')}
               disabled={isTransitioning}
-              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'board' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'} ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`h-full flex-1 rounded-xl px-4 text-sm font-medium transition ${viewMode === 'board' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'} ${isTransitioning ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               Kanban
             </button>
@@ -496,7 +497,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
               type="button"
               onClick={() => handleViewChange('list')}
               disabled={isTransitioning}
-              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'list' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'} ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`h-full flex-1 rounded-xl px-4 text-sm font-medium transition ${viewMode === 'list' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'} ${isTransitioning ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               List
             </button>
@@ -530,13 +531,13 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             <div className="mt-6 grid gap-4 lg:grid-cols-4">
               {boardColumns.map((column) => (
                 <div key={column.id} className="flex flex-col gap-3">
-                  <div className="h-20 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-4">
+                  <div className={`h-20 rounded-3xl border px-4 py-4 ${statusSurfaceStyles[column.id]}`}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-semibold text-[color:var(--theme-text)]">{column.label}</div>
-                        <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">{column.description}</div>
+                        <div className="text-sm font-semibold">{column.label}</div>
+                        <div className="mt-1 text-xs opacity-75">{column.description}</div>
                       </div>
-                      <span className="rounded-full border border-[color:var(--theme-border)] px-3 py-1 text-xs text-[color:var(--theme-text-muted)]">
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${statusBadgeStyles[column.id]}`}>
                         {column.items.length}
                       </span>
                     </div>
