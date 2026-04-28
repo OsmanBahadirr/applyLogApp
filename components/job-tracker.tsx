@@ -14,6 +14,12 @@ type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationD
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'board' | 'list';
 
+function getStoredViewMode(): ViewMode {
+  if (typeof window === 'undefined') return 'list';
+  const stored = window.localStorage.getItem('job-tracker-view-mode');
+  return stored === 'board' || stored === 'list' ? stored : 'list';
+}
+
 type KanbanColumn = {
   id: ApplicationStatus;
   label: string;
@@ -133,7 +139,8 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [activeDetailField, setActiveDetailField] = useState<DetailField | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
-  const [viewMode, setViewMode] = useState<ViewMode>('board');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [hasLoadedViewMode, setHasLoadedViewMode] = useState(false);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
@@ -197,6 +204,16 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [isWorkFilterOpen]);
+
+  useEffect(() => {
+    setViewMode(getStoredViewMode());
+    setHasLoadedViewMode(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedViewMode) return;
+    window.localStorage.setItem('job-tracker-view-mode', viewMode);
+  }, [hasLoadedViewMode, viewMode]);
 
   const persistState = (nextApplications: Application[], nextDeletedApplications: Application[]) => {
     fetch('/api/applications', {
@@ -467,10 +484,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                       onClick={() => { setWorkFilter(detail.type); setIsWorkFilterOpen(false); }}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)] ${isSelected ? 'bg-[color:var(--theme-accent-soft)]' : ''}`}
                     >
-                      <div className="flex-1">
-                        <div className="font-medium">{detail.type}</div>
-                        <div className="text-xs text-[color:var(--theme-text-muted)]">{detail.description}</div>
-                      </div>
+                      <div className="flex-1 font-medium">{detail.type}</div>
                       {isSelected ? <span className="text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
                     </button>
                   );
