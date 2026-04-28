@@ -209,21 +209,21 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <section className="rounded-[2rem] border border-white/60 bg-white/75 p-5 shadow-soft backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/75 sm:p-8">
+      <section className="rounded-[2rem] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-soft backdrop-blur-sm sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-indigo-600 dark:text-cyan-300">Job tracker</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl">Track every application in one polished workspace.</h1>
-            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-[color:var(--theme-accent)]">Job tracker</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[color:var(--theme-text)] sm:text-4xl">Track every application in one polished workspace.</h1>
+            <p className="mt-3 text-sm leading-6 text-[color:var(--theme-text-muted)]">
               A dashboard for scanning, filtering, editing, and managing your job search with minimal friction.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link href="/deleted" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+            <Link href="/deleted" className="inline-flex items-center justify-center rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-5 py-3 text-sm font-medium text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]">
               Deleted ({deletedApplications.length})
             </Link>
-            <button onClick={openCreate} className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+            <button onClick={openCreate} className="inline-flex items-center justify-center rounded-2xl bg-[color:var(--theme-text)] px-5 py-3 text-sm font-medium text-[color:var(--theme-surface-0)] shadow-lg shadow-slate-950/15 transition hover:bg-[color:var(--theme-accent-strong)]">
               Add application
             </button>
             <ThemeToggle />
@@ -239,47 +239,47 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           <StatCard label="No response" value={summary.noResponse} />
         </div>
 
-        <div className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-3">
+        <div className="mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 lg:grid-cols-3">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search company or program"
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+            className="w-full rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
           />
 
           <div ref={statusFilterRef} className="relative">
             <button
               type="button"
               onClick={() => setIsStatusFilterOpen((current) => !current)}
-              className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-950 outline-none transition hover:bg-slate-50 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+              className="flex w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
               aria-haspopup="listbox"
               aria-expanded={isStatusFilterOpen}
             >
               <span>{statusFilterLabel}</span>
-              <span className="text-slate-400" aria-hidden="true">{isStatusFilterOpen ? '↑' : '↓'}</span>
+              <span className="text-[color:var(--theme-text-muted)]" aria-hidden="true">{isStatusFilterOpen ? '↑' : '↓'}</span>
             </button>
 
             {isStatusFilterOpen ? (
-              <div className="absolute left-0 right-0 z-20 mt-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/30">
+              <div className="absolute left-0 right-0 z-20 mt-2 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-xl shadow-slate-900/10">
                 <button
                   type="button"
                   onClick={() => setStatusFilters([])}
-                  className="mb-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900"
+                  className="mb-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]"
                 >
                   <span>All statuses</span>
-                  {statusFilters.length === 0 ? <span className="text-xs text-indigo-600 dark:text-cyan-300">Selected</span> : null}
+                  {statusFilters.length === 0 ? <span className="text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
                 </button>
 
                 {STATUS_OPTIONS.map((option) => {
                   const isSelected = statusFilters.includes(option);
 
                   return (
-                    <label key={option} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900">
+                    <label key={option} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleStatusFilter(option)}
-                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-cyan-400 dark:focus:ring-cyan-500"
+                        className="h-4 w-4 rounded border-slate-300 text-[color:var(--theme-accent)] focus:ring-[color:var(--theme-focus)]"
                       />
                       <span>{option}</span>
                     </label>
@@ -289,7 +289,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             ) : null}
           </div>
 
-          <select value={workFilter} onChange={(e) => setWorkFilter(e.target.value as WorkFilterValue)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950">
+          <select value={workFilter} onChange={(e) => setWorkFilter(e.target.value as WorkFilterValue)} className="w-full rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-3 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]">
             <option value="All">All work types</option>
             {WORK_TYPE_OPTIONS.map((option) => (
               <option key={option} value={option}>{option}</option>
@@ -297,7 +297,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           </select>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+        <div className="mt-6 overflow-hidden rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)]">
           <table className="w-full table-fixed border-collapse">
             <colgroup>
               <col className="w-14" />
@@ -307,7 +307,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
               <col className="w-[18%]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+              <tr className="border-b border-[color:var(--theme-border)] text-left text-xs font-semibold uppercase tracking-wide text-[color:var(--theme-text-muted)]">
                 <th className="px-4 py-4 align-middle">
                   <span className="sr-only">Starred</span>
                 </th>
@@ -318,7 +318,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                     type="button"
                     aria-label={`Sort status ${statusSortDirection === 'asc' ? 'descending' : 'ascending'}`}
                     onClick={() => setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--theme-text-muted)] transition hover:bg-[color:var(--theme-surface-1)] hover:text-[color:var(--theme-text)]"
                   >
                     Status
                     <span aria-hidden="true">{statusSortDirection === 'asc' ? '↑' : '↓'}</span>
@@ -327,10 +327,10 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                 <th className="px-5 py-4 align-middle">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className="divide-y divide-[color:var(--theme-border)]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-sm text-slate-500 dark:text-slate-400">
+                  <td colSpan={5} className="px-6 py-14 text-center text-sm text-[color:var(--theme-text-muted)]">
                     No applications match the current filters.
                   </td>
                 </tr>
@@ -341,24 +341,24 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                       type="button"
                       aria-label={item.starred ? 'Unstar application' : 'Star application'}
                       onClick={() => toggleStar(item.id)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${item.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900' : 'border-slate-200 bg-white text-slate-300 hover:bg-slate-50 hover:text-amber-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-600 dark:hover:bg-slate-900 dark:hover:text-amber-300'}`}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${item.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] text-[color:var(--theme-text-muted)] hover:bg-[color:var(--theme-surface-1)] hover:text-amber-400'}`}
                     >
                       {item.starred ? '★' : '☆'}
                     </button>
                   </td>
                   <td className="px-5 py-5 align-middle">
-                    <div className="min-w-0 font-medium text-slate-950 dark:text-slate-50">{item.company}</div>
-                    <div className="mt-1 text-sm text-slate-500 dark:text-slate-400 md:hidden">{item.program}</div>
+                    <div className="min-w-0 font-medium text-[color:var(--theme-text)]">{item.company}</div>
+                    <div className="mt-1 text-sm text-[color:var(--theme-text-muted)] md:hidden">{item.program}</div>
                   </td>
                   <td className="px-5 py-5 align-middle">
-                    <div className="min-w-0 text-sm text-slate-700 dark:text-slate-300">{item.program}</div>
+                    <div className="min-w-0 text-sm text-[color:var(--theme-text-muted)]">{item.program}</div>
                   </td>
                   <td className="px-5 py-5 align-middle">
                     <div className="inline-flex items-center"><StatusBadge status={item.status} /></div>
                   </td>
                   <td className="px-5 py-5 align-middle">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => { setSelectedApplication(item); setActiveDetailField(null); }} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900">
+                      <button onClick={() => { setSelectedApplication(item); setActiveDetailField(null); }} className="rounded-xl border border-[color:var(--theme-border)] px-3 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
                         Details
                       </button>
                       <div className="relative">
@@ -367,12 +367,12 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                           aria-label="Open actions menu"
                           aria-expanded={openMenuId === item.id}
                           onClick={() => setOpenMenuId((current) => (current === item.id ? null : item.id))}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-lg font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
+                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--theme-border)] text-lg font-semibold text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]"
                         >
                           ⋯
                         </button>
                         {openMenuId === item.id ? (
-                          <div className="absolute bottom-full right-0 z-10 mb-2 w-36 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                          <div className="absolute bottom-full right-0 z-10 mb-2 w-36 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-lg">
                             <button
                               type="button"
                               onClick={() => removeApplication(item.id)}
@@ -401,14 +401,14 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       />
 
       {selectedApplication ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 py-6 backdrop-blur-sm" onClick={closeDetails}>
-          <div className="w-full max-w-xl rounded-3xl bg-white p-5 shadow-2xl shadow-slate-900/10 dark:bg-slate-900 dark:shadow-black/30" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--theme-overlay)] px-4 py-6 backdrop-blur-sm" onClick={closeDetails}>
+          <div className="w-full max-w-xl rounded-3xl bg-[color:var(--theme-card-strong)] p-5 shadow-2xl shadow-slate-900/10" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">{selectedApplication.company}</h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedApplication.program}</p>
+                <h2 className="text-xl font-semibold text-[color:var(--theme-text)]">{selectedApplication.company}</h2>
+                <p className="mt-1 text-sm text-[color:var(--theme-text-muted)]">{selectedApplication.program}</p>
               </div>
-              <button onClick={closeDetails} className="rounded-full px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
+              <button onClick={closeDetails} className="rounded-full px-3 py-1.5 text-sm text-[color:var(--theme-text-muted)] hover:bg-[color:var(--theme-surface-1)]">
                 Close
               </button>
             </div>
@@ -421,17 +421,17 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                 return (
                   <div
                     key={field.key}
-                    className={`rounded-2xl border p-4 transition ${isActive ? 'border-indigo-300 bg-indigo-50 ring-4 ring-indigo-100 dark:border-cyan-700 dark:bg-cyan-950/40 dark:ring-cyan-950' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-800'}`}
+                    className={`rounded-2xl border p-4 transition ${isActive ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)] ring-4 ring-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] hover:bg-[color:var(--theme-surface-2)]'}`}
                     onClick={() => setActiveDetailField(field.key)}
                   >
-                    <div className="mb-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{field.label}</div>
+                    <div className="mb-2 text-xs uppercase tracking-wide text-[color:var(--theme-text-muted)]">{field.label}</div>
 
                     {field.type === 'text' && isActive ? (
                       <input
                         autoFocus
                         value={String(value)}
                         onChange={(e) => updateSelectedApplication({ [field.key]: e.target.value } as Partial<Application>)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+                        className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
                       />
                     ) : null}
 
@@ -440,7 +440,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                         autoFocus
                         value={selectedApplication.status}
                         onChange={(e) => updateSelectedApplication({ status: e.target.value as ApplicationStatus })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+                        className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
                       >
                         {STATUS_OPTIONS.map((option) => (
                           <option key={option} value={option}>{option}</option>
@@ -453,7 +453,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                         autoFocus
                         value={selectedApplication.workType}
                         onChange={(e) => updateSelectedApplication({ workType: e.target.value as WorkType })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+                        className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
                       >
                         {WORK_TYPE_OPTIONS.map((option) => (
                           <option key={option} value={option}>{option}</option>
@@ -467,7 +467,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                         type="date"
                         value={selectedApplication.applicationDate}
                         onChange={(e) => updateSelectedApplication({ applicationDate: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+                        className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
                       />
                     ) : null}
 
@@ -477,18 +477,18 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                         rows={4}
                         value={selectedApplication.notes}
                         onChange={(e) => updateSelectedApplication({ notes: e.target.value })}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-cyan-400 dark:focus:ring-cyan-950"
+                        className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
                       />
                     ) : null}
 
                     {!isActive ? (
-                      <div className="text-sm font-medium text-slate-950 dark:text-slate-50">
+                      <div className="text-sm font-medium text-[color:var(--theme-text)]">
                         {field.key === 'status' ? <StatusBadge status={selectedApplication.status} /> : null}
                         {field.key !== 'status' && field.key !== 'notes' ? String(value) : null}
-                        {field.key === 'notes' ? <div className="whitespace-pre-wrap leading-6 text-slate-700 dark:text-slate-300">{String(value || 'No notes yet.')}</div> : null}
+                        {field.key === 'notes' ? <div className="whitespace-pre-wrap leading-6 text-[color:var(--theme-text-muted)]">{String(value || 'No notes yet.')}</div> : null}
                       </div>
                     ) : (
-                      <div className="mt-2 text-xs text-indigo-600 dark:text-cyan-300">Editing</div>
+                      <div className="mt-2 text-xs text-[color:var(--theme-accent)]">Editing</div>
                     )}
                   </div>
                 );
@@ -496,10 +496,10 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">
-              <button onClick={closeDetails} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+              <button onClick={closeDetails} className="rounded-xl border border-[color:var(--theme-border)] px-4 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
                 Close
               </button>
-              <button onClick={saveDetails} className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300">
+              <button onClick={saveDetails} className="rounded-xl bg-[color:var(--theme-text)] px-4 py-2 text-sm font-medium text-[color:var(--theme-surface-0)] hover:bg-[color:var(--theme-accent-strong)]">
                 Save
               </button>
             </div>
