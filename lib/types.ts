@@ -1,10 +1,8 @@
 export type ApplicationStatus =
-  | 'Applied'
-  | 'Test Phase'
-  | 'Interviewing'
-  | 'Rejected'
-  | 'Accepted'
-  | 'No Response';
+  | 'Submitted'
+  | 'Interview'
+  | 'Offer'
+  | 'Rejected';
 
 export type WorkType =
   | 'Full-time'
@@ -29,13 +27,10 @@ export type DashboardState = {
 };
 
 export const STATUS_OPTIONS: ApplicationStatus[] = [
-  'Applied',
-  'Test Phase',
-  'Interviewing',
+  'Submitted',
+  'Interview',
+  'Offer',
   'Rejected',
-  'Accepted',
-  'No Response',
-  
 ];
 
 export const WORK_TYPE_OPTIONS: WorkType[] = [

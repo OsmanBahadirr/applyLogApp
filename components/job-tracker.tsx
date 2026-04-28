@@ -1,7 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { DragDropProvider, DragOverlay, useDraggable, useDroppable } from '@dnd-kit/react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApplicationForm } from './application-form';
 import { StatusBadge } from './status-badge';
 import { ThemeToggle } from './theme-toggle';
@@ -10,14 +11,21 @@ import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, type Application, type ApplicationSt
 type WorkFilterValue = 'All' | WorkType;
 type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationDate' | 'notes';
 type SortDirection = 'asc' | 'desc';
+type ViewMode = 'board' | 'list';
 
-const STATUS_ORDER: ApplicationStatus[] = [
-  'Accepted',
-  'Test Phase',
-  'Interviewing',
-  'Applied',
-  'No Response',
-  'Rejected',
+type KanbanColumn = {
+  id: ApplicationStatus;
+  label: string;
+  description: string;
+};
+
+const STATUS_ORDER: ApplicationStatus[] = ['Submitted', 'Interview', 'Offer', 'Rejected'];
+
+const KANBAN_COLUMNS: KanbanColumn[] = [
+  { id: 'Submitted', label: 'Submitted', description: 'Applications sent and awaiting response.' },
+  { id: 'Interview', label: 'Interview', description: 'Recruiter screens and interview loops.' },
+  { id: 'Offer', label: 'Offer', description: 'Offers and final negotiations.' },
+  { id: 'Rejected', label: 'Rejected', description: 'Closed out or declined applications.' },
 ];
 
 const statusRank = new Map(STATUS_ORDER.map((status, index) => [status, index]));
@@ -33,11 +41,10 @@ const DETAIL_FIELDS: Array<{ key: DetailField; label: string; type: 'text' | 'se
 
 const STAT_CARD_STYLES: Record<string, string> = {
   'Total applications': 'border-slate-200 bg-slate-50 text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50',
-  'Test phase': 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100',
-  'Interviewing': 'border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-100',
-  'Rejected': 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
-  'Accepted': 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100',
-  'No response': 'border-violet-200 bg-violet-50 text-violet-950 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-100',
+  Submitted: 'border-slate-200 bg-slate-50 text-slate-950 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50',
+  Interview: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100',
+  Offer: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100',
+  Rejected: 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-100',
 };
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -47,6 +54,78 @@ function StatCard({ label, value }: { label: string; value: number }) {
     <div className={`rounded-3xl border p-4 shadow-soft backdrop-blur ${tone}`}>
       <div className="text-xs font-medium uppercase tracking-wide opacity-70">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function ColumnDropZone({ id, children }: { id: ApplicationStatus; children: ReactNode }) {
+  const { isDropTarget, ref } = useDroppable({ id });
+
+  return (
+    <div
+      ref={ref}
+      className={`flex min-h-[200px] flex-col gap-3 rounded-3xl border px-4 py-4 transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableCard({ application, onStar, onDetails, onDelete }: {
+  application: Application;
+  onStar: (id: number) => void;
+  onDetails: () => void;
+  onDelete: () => void;
+}) {
+  const { ref, handleRef, isDragging } = useDraggable({ id: application.id, data: { status: application.status } });
+
+  return (
+    <div
+      ref={ref}
+      className={`rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-4 shadow-soft transition ${isDragging ? 'opacity-40' : 'opacity-100'}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-[color:var(--theme-text)]">{application.company}</div>
+          <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">{application.program}</div>
+        </div>
+        <button
+          type="button"
+          ref={handleRef}
+          aria-label="Drag application"
+          className="rounded-full border border-[color:var(--theme-border)] px-2 py-1 text-xs text-[color:var(--theme-text-muted)] transition hover:bg-[color:var(--theme-surface-1)]"
+        >
+          Drag
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <StatusBadge status={application.status} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onStar(application.id)}
+            aria-label={application.starred ? 'Unstar application' : 'Star application'}
+            className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs transition ${application.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] text-[color:var(--theme-text-muted)] hover:bg-[color:var(--theme-surface-1)] hover:text-amber-400'}`}
+          >
+            {application.starred ? '★' : '☆'}
+          </button>
+          <button
+            type="button"
+            onClick={onDetails}
+            className="rounded-full border border-[color:var(--theme-border)] px-3 py-1 text-xs text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]"
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700 transition hover:bg-rose-50 dark:border-rose-800 dark:text-rose-200 dark:hover:bg-rose-950"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -63,6 +142,8 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [activeDetailField, setActiveDetailField] = useState<DetailField | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
+  const [viewMode, setViewMode] = useState<ViewMode>('board');
+  const [draggedId, setDraggedId] = useState<number | null>(null);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -127,11 +208,10 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     const count = (status: ApplicationStatus) => applications.filter((item) => item.status === status).length;
     return {
       total: applications.length,
-      interviewing: count('Interviewing'),
-      testPhase: count('Test Phase'),
+      submitted: count('Submitted'),
+      interview: count('Interview'),
+      offer: count('Offer'),
       rejected: count('Rejected'),
-      accepted: count('Accepted'),
-      noResponse: count('No Response'),
     };
   }, [applications]);
 
@@ -207,6 +287,41 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     closeDetails();
   };
 
+  const boardColumns = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const matchesQuery = (item: Application) => !query
+      || item.company.toLowerCase().includes(query)
+      || item.program.toLowerCase().includes(query);
+
+    return KANBAN_COLUMNS.map((column) => {
+      const items = applications
+        .filter((item) => item.status === column.id)
+        .filter((item) => matchesQuery(item))
+        .filter((item) => statusFilters.length === 0 || statusFilters.includes(item.status))
+        .filter((item) => workFilter === 'All' || item.workType === workFilter)
+        .sort((a, b) => {
+          const starredDiff = Number(b.starred) - Number(a.starred);
+          if (starredDiff !== 0) return starredDiff;
+          return a.company.localeCompare(b.company);
+        });
+
+      return {
+        ...column,
+        items,
+      };
+    });
+  }, [applications, search, statusFilters, workFilter]);
+
+  const moveApplication = (id: number, status: ApplicationStatus) => {
+    setApplications((current) => {
+      const nextApplications = current.map((item) => (item.id === id ? { ...item, status } : item));
+      persistState(nextApplications, deletedApplications);
+      return nextApplications;
+    });
+  };
+
+  const draggedApplication = draggedId ? applications.find((item) => item.id === draggedId) ?? null : null;
+
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <section className="rounded-[2rem] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-soft backdrop-blur-sm sm:p-8">
@@ -230,16 +345,15 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard label="Total applications" value={summary.total} />
-          <StatCard label="Test phase" value={summary.testPhase} />
-          <StatCard label="Interviewing" value={summary.interviewing} />
+          <StatCard label="Submitted" value={summary.submitted} />
+          <StatCard label="Interview" value={summary.interview} />
+          <StatCard label="Offer" value={summary.offer} />
           <StatCard label="Rejected" value={summary.rejected} />
-          <StatCard label="Accepted" value={summary.accepted} />
-          <StatCard label="No response" value={summary.noResponse} />
         </div>
 
-        <div className="mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 lg:grid-cols-3">
+        <div className="mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 lg:grid-cols-[2fr_1fr_1fr_1fr]">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -295,101 +409,184 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
+
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2">
+            <button
+              type="button"
+              onClick={() => setViewMode('board')}
+              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'board' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'}`}
+            >
+              Kanban
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${viewMode === 'list' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]'}`}
+            >
+              List
+            </button>
+          </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)]">
-          <table className="w-full table-fixed border-collapse">
-            <colgroup>
-              <col className="w-14" />
-              <col className="w-[30%]" />
-              <col className="w-[38%]" />
-              <col className="w-[14%]" />
-              <col className="w-[18%]" />
-            </colgroup>
-            <thead>
-              <tr className="border-b border-[color:var(--theme-border)] text-left text-xs font-semibold uppercase tracking-wide text-[color:var(--theme-text-muted)]">
-                <th className="px-4 py-4 align-middle">
-                  <span className="sr-only">Starred</span>
-                </th>
-                <th className="px-5 py-4 align-middle">Company</th>
-                <th className="px-5 py-4 align-middle">Program</th>
-                <th className="px-5 py-4 align-middle" aria-sort={statusSortDirection === 'asc' ? 'ascending' : 'descending'}>
-                  <button
-                    type="button"
-                    aria-label={`Sort status ${statusSortDirection === 'asc' ? 'descending' : 'ascending'}`}
-                    onClick={() => setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--theme-text-muted)] transition hover:bg-[color:var(--theme-surface-1)] hover:text-[color:var(--theme-text)]"
-                  >
-                    Status
-                    <span aria-hidden="true">{statusSortDirection === 'asc' ? '↑' : '↓'}</span>
-                  </button>
-                </th>
-                <th className="px-5 py-4 align-middle">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[color:var(--theme-border)]">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-sm text-[color:var(--theme-text-muted)]">
-                    No applications match the current filters.
-                  </td>
-                </tr>
-              ) : filtered.map((item) => (
-                <tr key={item.id} className="align-middle">
-                  <td className="px-4 py-5 align-middle">
+        {viewMode === 'board' ? (
+          <DragDropProvider
+            onDragStart={({ operation }) => {
+              const sourceId = operation?.source?.id;
+              if (typeof sourceId === 'number') {
+                setDraggedId(sourceId);
+              }
+            }}
+            onDragEnd={({ operation }) => {
+              const sourceId = operation?.source?.id;
+              const targetId = operation?.target?.id;
+
+              setDraggedId(null);
+
+              if (!sourceId || !targetId || sourceId === targetId) {
+                return;
+              }
+
+              if (typeof sourceId === 'number' && typeof targetId === 'string') {
+                moveApplication(sourceId, targetId as ApplicationStatus);
+              }
+            }}
+          >
+            <div className="mt-6 grid gap-4 lg:grid-cols-4">
+              {boardColumns.map((column) => (
+                <div key={column.id} className="flex flex-col gap-3">
+                  <div className="rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-[color:var(--theme-text)]">{column.label}</div>
+                        <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">{column.description}</div>
+                      </div>
+                      <span className="rounded-full border border-[color:var(--theme-border)] px-3 py-1 text-xs text-[color:var(--theme-text-muted)]">
+                        {column.items.length}
+                      </span>
+                    </div>
+                  </div>
+                  <ColumnDropZone id={column.id}>
+                    {column.items.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-[color:var(--theme-border)] px-4 py-6 text-center text-xs text-[color:var(--theme-text-muted)]">
+                        Drag applications here.
+                      </div>
+                    ) : column.items.map((item) => (
+                      <DraggableCard
+                        key={item.id}
+                        application={item}
+                        onStar={toggleStar}
+                        onDetails={() => { setSelectedApplication(item); setActiveDetailField(null); }}
+                        onDelete={() => removeApplication(item.id)}
+                      />
+                    ))}
+                  </ColumnDropZone>
+                </div>
+              ))}
+            </div>
+            <DragOverlay>
+              {draggedApplication ? (
+                <div className="rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-4 shadow-2xl">
+                  <div className="text-sm font-semibold text-[color:var(--theme-text)]">{draggedApplication.company}</div>
+                  <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">{draggedApplication.program}</div>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DragDropProvider>
+        ) : (
+          <div className="mt-6 overflow-hidden rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)]">
+            <table className="w-full table-fixed border-collapse">
+              <colgroup>
+                <col className="w-14" />
+                <col className="w-[30%]" />
+                <col className="w-[38%]" />
+                <col className="w-[14%]" />
+                <col className="w-[18%]" />
+              </colgroup>
+              <thead>
+                <tr className="border-b border-[color:var(--theme-border)] text-left text-xs font-semibold uppercase tracking-wide text-[color:var(--theme-text-muted)]">
+                  <th className="px-4 py-4 align-middle">
+                    <span className="sr-only">Starred</span>
+                  </th>
+                  <th className="px-5 py-4 align-middle">Company</th>
+                  <th className="px-5 py-4 align-middle">Program</th>
+                  <th className="px-5 py-4 align-middle" aria-sort={statusSortDirection === 'asc' ? 'ascending' : 'descending'}>
                     <button
                       type="button"
-                      aria-label={item.starred ? 'Unstar application' : 'Star application'}
-                      onClick={() => toggleStar(item.id)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${item.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] text-[color:var(--theme-text-muted)] hover:bg-[color:var(--theme-surface-1)] hover:text-amber-400'}`}
+                      aria-label={`Sort status ${statusSortDirection === 'asc' ? 'descending' : 'ascending'}`}
+                      onClick={() => setStatusSortDirection((current) => (current === 'asc' ? 'desc' : 'asc'))}
+                      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--theme-text-muted)] transition hover:bg-[color:var(--theme-surface-1)] hover:text-[color:var(--theme-text)]"
                     >
-                      {item.starred ? '★' : '☆'}
+                      Status
+                      <span aria-hidden="true">{statusSortDirection === 'asc' ? '↑' : '↓'}</span>
                     </button>
-                  </td>
-                  <td className="px-5 py-5 align-middle">
-                    <div className="min-w-0 font-medium text-[color:var(--theme-text)]">{item.company}</div>
-                    <div className="mt-1 text-sm text-[color:var(--theme-text-muted)] md:hidden">{item.program}</div>
-                  </td>
-                  <td className="px-5 py-5 align-middle">
-                    <div className="min-w-0 text-sm text-[color:var(--theme-text-muted)]">{item.program}</div>
-                  </td>
-                  <td className="px-5 py-5 align-middle">
-                    <div className="inline-flex items-center"><StatusBadge status={item.status} /></div>
-                  </td>
-                  <td className="px-5 py-5 align-middle">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => { setSelectedApplication(item); setActiveDetailField(null); }} className="rounded-xl border border-[color:var(--theme-border)] px-3 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
-                        Details
-                      </button>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          aria-label="Open actions menu"
-                          aria-expanded={openMenuId === item.id}
-                          onClick={() => setOpenMenuId((current) => (current === item.id ? null : item.id))}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--theme-border)] text-lg font-semibold text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]"
-                        >
-                          ⋯
-                        </button>
-                        {openMenuId === item.id ? (
-                          <div className="absolute bottom-full right-0 z-10 mb-2 w-36 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-lg">
-                            <button
-                              type="button"
-                              onClick={() => removeApplication(item.id)}
-                              className="w-full rounded-xl border border-rose-200 px-3 py-2 text-left text-sm font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-200 dark:hover:bg-rose-950"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </td>
+                  </th>
+                  <th className="px-5 py-4 align-middle">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[color:var(--theme-border)]">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-14 text-center text-sm text-[color:var(--theme-text-muted)]">
+                      No applications match the current filters.
+                    </td>
+                  </tr>
+                ) : filtered.map((item) => (
+                  <tr key={item.id} className="align-middle">
+                    <td className="px-4 py-5 align-middle">
+                      <button
+                        type="button"
+                        aria-label={item.starred ? 'Unstar application' : 'Star application'}
+                        onClick={() => toggleStar(item.id)}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${item.starred ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] text-[color:var(--theme-text-muted)] hover:bg-[color:var(--theme-surface-1)] hover:text-amber-400'}`}
+                      >
+                        {item.starred ? '★' : '☆'}
+                      </button>
+                    </td>
+                    <td className="px-5 py-5 align-middle">
+                      <div className="min-w-0 font-medium text-[color:var(--theme-text)]">{item.company}</div>
+                      <div className="mt-1 text-sm text-[color:var(--theme-text-muted)] md:hidden">{item.program}</div>
+                    </td>
+                    <td className="px-5 py-5 align-middle">
+                      <div className="min-w-0 text-sm text-[color:var(--theme-text-muted)]">{item.program}</div>
+                    </td>
+                    <td className="px-5 py-5 align-middle">
+                      <div className="inline-flex items-center"><StatusBadge status={item.status} /></div>
+                    </td>
+                    <td className="px-5 py-5 align-middle">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => { setSelectedApplication(item); setActiveDetailField(null); }} className="rounded-xl border border-[color:var(--theme-border)] px-3 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
+                          Details
+                        </button>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            aria-label="Open actions menu"
+                            aria-expanded={openMenuId === item.id}
+                            onClick={() => setOpenMenuId((current) => (current === item.id ? null : item.id))}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--theme-border)] text-lg font-semibold text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]"
+                          >
+                            ⋯
+                          </button>
+                          {openMenuId === item.id ? (
+                            <div className="absolute bottom-full right-0 z-10 mb-2 w-36 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-lg">
+                              <button
+                                type="button"
+                                onClick={() => removeApplication(item.id)}
+                                className="w-full rounded-xl border border-rose-200 px-3 py-2 text-left text-sm font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-200 dark:hover:bg-rose-950"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <ApplicationForm
