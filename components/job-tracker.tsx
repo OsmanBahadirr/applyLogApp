@@ -13,6 +13,7 @@ type WorkFilterValue = 'All' | WorkType;
 type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationDate' | 'notes';
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'board' | 'list';
+type TimeViewMode = 'day' | 'week';
 
 function getStoredViewMode(): ViewMode {
   if (typeof window === 'undefined') return 'list';
@@ -58,6 +59,166 @@ function StatCard({ label, value }: { label: string; value: number }) {
     <div className={`rounded-3xl border p-4 shadow-soft backdrop-blur ${tone}`}>
       <div className="text-xs font-medium uppercase tracking-wide opacity-70">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function TimeVisualization({ applications, timeViewMode, onTimeViewChange }: {
+  applications: Application[];
+  timeViewMode: TimeViewMode;
+  onTimeViewChange: (mode: TimeViewMode) => void;
+}) {
+  const timeData = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    applications.forEach((app) => {
+      const date = new Date(app.applicationDate);
+      let key: string;
+
+      if (timeViewMode === 'day') {
+        key = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } else {
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        key = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
+
+      grouped.set(key, (grouped.get(key) || 0) + 1);
+    });
+
+    return Array.from(grouped.entries())
+      .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+      .slice(-14);
+  }, [applications, timeViewMode]);
+
+  if (timeData.length === 0) {
+    return null;
+  }
+
+  const maxCount = Math.max(...timeData.map(([, count]) => count), 1);
+  const dataPoints = timeData.map(([, count]) => count);
+  const labels = timeData.map(([label]) => label);
+
+  const chartWidth = 800;
+  const chartHeight = 200;
+  const padding = { top: 20, right: 20, bottom: 40, left: 40 };
+  const innerWidth = chartWidth - padding.left - padding.right;
+  const innerHeight = chartHeight - padding.top - padding.bottom;
+
+  const xStep = innerWidth / (dataPoints.length - 1);
+  const yScale = (value: number) => innerHeight - (value / maxCount) * innerHeight;
+
+  const points = dataPoints.map((value, index) => {
+    const x = padding.left + index * xStep;
+    const y = padding.top + yScale(value);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const areaPath = `${padding.left},${padding.top + innerHeight} ${points} ${padding.left + (dataPoints.length - 1) * xStep},${padding.top + innerHeight}`;
+
+  return (
+    <div className="mt-8 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Applications over time</h3>
+          <p className="mt-1 text-sm text-[color:var(--theme-text-muted)]">Track your application activity</p>
+        </div>
+        <div className="flex h-10 items-center justify-center gap-1 rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-1">
+          <button
+            type="button"
+            onClick={() => onTimeViewChange('day')}
+            className={`h-full rounded-lg px-4 py-1.5 text-sm font-medium transition ${timeViewMode === 'day' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-text)]'}`}
+          >
+            Day
+          </button>
+          <button
+            type="button"
+            onClick={() => onTimeViewChange('week')}
+            className={`h-full rounded-lg px-4 py-1.5 text-sm font-medium transition ${timeViewMode === 'week' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-text)]'}`}
+          >
+            Week
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <svg width={chartWidth} height={chartHeight} className="mx-auto">
+          <defs>
+            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="var(--theme-accent)" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="var(--theme-accent)" stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
+
+          <polygon
+            points={areaPath}
+            fill="url(#areaGradient)"
+          />
+
+          <polyline
+            points={points}
+            fill="none"
+            stroke="var(--theme-accent)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {dataPoints.map((value, index) => {
+            const x = padding.left + index * xStep;
+            const y = padding.top + yScale(value);
+
+            return (
+              <g key={index}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="5"
+                  fill="var(--theme-surface-0)"
+                  stroke="var(--theme-accent)"
+                  strokeWidth="2"
+                />
+                <text
+                  x={x}
+                  y={y - 12}
+                  textAnchor="middle"
+                  className="text-xs font-semibold"
+                  style={{ fill: 'var(--theme-text)' }}
+                >
+                  {value}
+                </text>
+                <text
+                  x={x}
+                  y={chartHeight - 5}
+                  textAnchor="middle"
+                  className="text-xs"
+                  style={{ fill: 'var(--theme-text-muted)' }}
+                >
+                  {labels[index].split(' ').slice(-2).join(' ')}
+                </text>
+              </g>
+            );
+          })}
+
+          <line
+            x1={padding.left}
+            y1={padding.top}
+            x2={padding.left}
+            y2={chartHeight - padding.bottom}
+            stroke="var(--theme-border)"
+            strokeWidth="1"
+          />
+
+          <line
+            x1={padding.left}
+            y1={chartHeight - padding.bottom}
+            x2={chartWidth - padding.right}
+            y2={chartHeight - padding.bottom}
+            stroke="var(--theme-border)"
+            strokeWidth="1"
+          />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -140,6 +301,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [timeViewMode, setTimeViewMode] = useState<TimeViewMode>('day');
   const [hasLoadedViewMode, setHasLoadedViewMode] = useState(false);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -674,6 +836,12 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           </div>
           )}
         </div>
+
+        <TimeVisualization
+          applications={applications}
+          timeViewMode={timeViewMode}
+          onTimeViewChange={setTimeViewMode}
+        />
       </section>
 
       <ApplicationForm
