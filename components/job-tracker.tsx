@@ -243,6 +243,14 @@ function ColumnDropZone({ id, children }: { id: ApplicationStatus; children: Rea
   );
 }
 
+function isOlderThan30Days(dateString: string): boolean {
+  const applicationDate = new Date(dateString);
+  const today = new Date();
+  const diffTime = today.getTime() - applicationDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 30;
+}
+
 function DraggableCard({ application, onStar, onDetails, onDelete }: {
   application: Application;
   onStar: (id: number) => void;
@@ -250,6 +258,7 @@ function DraggableCard({ application, onStar, onDetails, onDelete }: {
   onDelete: () => void;
 }) {
   const { ref, isDragging } = useDraggable({ id: application.id, data: { status: application.status } });
+  const isOld = isOlderThan30Days(application.applicationDate);
 
   return (
     <div
@@ -258,7 +267,14 @@ function DraggableCard({ application, onStar, onDetails, onDelete }: {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[color:var(--theme-text)]">{application.company}</div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-semibold text-[color:var(--theme-text)]">{application.company}</div>
+            {isOld && (
+              <span title="Over 30 days" className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs dark:bg-amber-900">
+                ⏱
+              </span>
+            )}
+          </div>
           <div className="mt-1 text-xs text-[color:var(--theme-text-muted)]">{application.program}</div>
         </div>
       </div>
@@ -592,50 +608,52 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
             className="h-12 w-full rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
           />
 
-          <div ref={statusFilterRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setIsStatusFilterOpen((current) => !current)}
-              className="flex h-12 w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
-              aria-haspopup="listbox"
-              aria-expanded={isStatusFilterOpen}
-            >
-              <span>{statusFilterLabel}</span>
-              <span className="text-[color:var(--theme-text-muted)]" aria-hidden="true">{isStatusFilterOpen ? '↑' : '↓'}</span>
-            </button>
+          {viewMode !== 'board' && (
+            <div ref={statusFilterRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsStatusFilterOpen((current) => !current)}
+                className="flex h-12 w-full items-center justify-between rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-4 text-left text-sm text-[color:var(--theme-text)] outline-none transition hover:bg-[color:var(--theme-surface-1)] focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+                aria-haspopup="listbox"
+                aria-expanded={isStatusFilterOpen}
+              >
+                <span>{statusFilterLabel}</span>
+                <span className="text-[color:var(--theme-text-muted)]" aria-hidden="true">{isStatusFilterOpen ? '↑' : '↓'}</span>
+              </button>
 
-            {isStatusFilterOpen ? (
-              <div className="absolute left-0 right-0 z-20 mt-2 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-xl shadow-slate-900/10">
-                <button
-                  type="button"
-                  onClick={() => setStatusFilters([])}
-                  className="mb-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]"
-                >
-                  <span>All statuses</span>
-                  {statusFilters.length === 0 ? <span className="text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
-                </button>
+              {isStatusFilterOpen ? (
+                <div className="absolute left-0 right-0 z-20 mt-2 rounded-2xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-2 shadow-xl shadow-slate-900/10">
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilters([])}
+                    className="mb-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]"
+                  >
+                    <span>All statuses</span>
+                    {statusFilters.length === 0 ? <span className="text-xs text-[color:var(--theme-accent)]">Selected</span> : null}
+                  </button>
 
-                {STATUS_OPTIONS.map((option) => {
-                  const isSelected = statusFilters.includes(option);
+                  {STATUS_OPTIONS.map((option) => {
+                    const isSelected = statusFilters.includes(option);
 
-                  return (
-                    <label key={option} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleStatusFilter(option)}
-                        className="h-4 w-4 rounded border-slate-300 text-[color:var(--theme-accent)] focus:ring-[color:var(--theme-focus)]"
-                      />
-                      <span className="flex items-center gap-2">
-                        <span className={`h-2.5 w-2.5 rounded-full ${statusDotStyles[option]}`} aria-hidden="true" />
-                        <span>{option}</span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
+                    return (
+                      <label key={option} className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--theme-text)] transition hover:bg-[color:var(--theme-surface-1)]">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleStatusFilter(option)}
+                          className="h-4 w-4 rounded border-slate-300 text-[color:var(--theme-accent)] focus:ring-[color:var(--theme-focus)]"
+                        />
+                        <span className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${statusDotStyles[option]}`} aria-hidden="true" />
+                          <span>{option}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div ref={workFilterRef} className="relative">
             <button
@@ -815,7 +833,14 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                       </button>
                     </td>
                     <td className="px-5 py-5 align-middle">
-                      <div className="min-w-0 font-medium text-[color:var(--theme-text)]">{item.company}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0 font-medium text-[color:var(--theme-text)]">{item.company}</div>
+                        {isOlderThan30Days(item.applicationDate) && (
+                          <span title="Over 30 days" className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs dark:bg-amber-900">
+                            ⏱
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-1 text-sm text-[color:var(--theme-text-muted)] md:hidden">{item.program}</div>
                     </td>
                     <td className="px-5 py-5 align-middle">
