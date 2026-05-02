@@ -600,7 +600,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           <StatCard label="Rejected" value={summary.rejected} />
         </div>
 
-        <div className="mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className={`mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 ${viewMode === 'board' ? 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]' : 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]'}`}>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
