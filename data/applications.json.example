@@ -1,0 +1,246 @@
+{
+  "applications": [
+    {
+      "id": 1,
+      "starred": false,
+      "company": "Netsmart",
+      "program": "System Admin",
+      "workType": "Internship",
+      "status": "Applied",
+      "applicationDate": "2026-05-02",
+      "notes": ""
+    },
+    {
+      "id": 2,
+      "starred": true,
+      "company": "TechCorp",
+      "program": "Frontend Developer",
+      "workType": "Full-time",
+      "status": "Applied",
+      "applicationDate": "2026-04-28",
+      "notes": "Referred by Ahmet"
+    },
+    {
+      "id": 3,
+      "starred": false,
+      "company": "DataFlow",
+      "program": "Data Engineer",
+      "workType": "Full-time",
+      "status": "Applied",
+      "applicationDate": "2026-04-25",
+      "notes": ""
+    },
+    {
+      "id": 4,
+      "starred": true,
+      "company": "CloudBase",
+      "program": "DevOps Engineer",
+      "workType": "Full-time",
+      "status": "Applied",
+      "applicationDate": "2026-04-20",
+      "notes": "Technical interview scheduled"
+    },
+    {
+      "id": 5,
+      "starred": false,
+      "company": "StartupXYZ",
+      "program": "Junior Developer",
+      "workType": "Part-time",
+      "status": "No Response",
+      "applicationDate": "2026-04-15",
+      "notes": "Following up next week"
+    },
+    {
+      "id": 6,
+      "starred": false,
+      "company": "Enterprise Solutions",
+      "program": "Backend Developer",
+      "workType": "Internship",
+      "status": "Rejected",
+      "applicationDate": "2026-04-10",
+      "notes": "Looking for more experienced candidates"
+    },
+    {
+      "id": 7,
+      "starred": true,
+      "company": "AI Innovations",
+      "program": "ML Engineer",
+      "workType": "Bootcamp",
+      "status": "Test Phase",
+      "applicationDate": "2026-05-01",
+      "notes": ""
+    },
+    {
+      "id": 8,
+      "starred": false,
+      "company": "WebAgency",
+      "program": "Full Stack Developer",
+      "workType": "Part-time",
+      "status": "No Response",
+      "applicationDate": "2026-04-22",
+      "notes": ""
+    },
+    {
+      "id": 9,
+      "starred": true,
+      "company": "CyberSec",
+      "program": "Security Analyst",
+      "workType": "Full-time",
+      "status": "Test Phase",
+      "applicationDate": "2026-02-20",
+      "notes": "Over 30 days old - needs follow up"
+    },
+    {
+      "id": 10,
+      "starred": false,
+      "company": "MobileTech",
+      "program": "iOS Developer",
+      "workType": "Part-time",
+      "status": "Applied",
+      "applicationDate": "2026-01-25",
+      "notes": "Over 30 days - no response yet"
+    },
+    {
+      "id": 11,
+      "starred": false,
+      "company": "QuantumSoft",
+      "program": "Quantum Developer",
+      "workType": "Internship",
+      "status": "Test Phase",
+      "applicationDate": "2026-04-05",
+      "notes": ""
+    },
+    {
+      "id": 12,
+      "starred": true,
+      "company": "GreenTech",
+      "program": "Environmental Engineer",
+      "workType": "Bootcamp",
+      "status": "Test Phase",
+      "applicationDate": "2026-01-10",
+      "notes": "Over 30 days - still pending"
+    },
+    {
+      "id": 13,
+      "starred": false,
+      "company": "FinAnalytics",
+      "program": "Financial Data Analyst",
+      "workType": "Full-time",
+      "status": "Rejected",
+      "applicationDate": "2026-02-01",
+      "notes": "Over 30 days - may need to follow up"
+    },
+    {
+      "id": 14,
+      "starred": false,
+      "company": "HealthSoft",
+      "program": "Health Tech Developer",
+      "workType": "Full-time",
+      "status": "Rejected",
+      "applicationDate": "2026-02-15",
+      "notes": "Not a good fit"
+    },
+    {
+      "id": 15,
+      "starred": true,
+      "company": "GameStudio",
+      "program": "Game Developer",
+      "workType": "Internship",
+      "status": "Test Phase",
+      "applicationDate": "2026-04-12",
+      "notes": "Passionate about indie games"
+    },
+    {
+      "id": 16,
+      "starred": false,
+      "company": "RoboTech",
+      "program": "Robotics Engineer",
+      "workType": "Part-time",
+      "status": "Test Phase",
+      "applicationDate": "2026-01-30",
+      "notes": "Over 30 days - coding challenge sent"
+    },
+    {
+      "id": 17,
+      "starred": false,
+      "company": "CloudNine",
+      "program": "Cloud Architect",
+      "workType": "Bootcamp",
+      "status": "Rejected",
+      "applicationDate": "2026-04-18",
+      "notes": ""
+    },
+    {
+      "id": 18,
+      "starred": true,
+      "company": "EcomPlus",
+      "program": "E-commerce Developer",
+      "workType": "Full-time",
+      "status": "Applied",
+      "applicationDate": "2026-02-20",
+      "notes": ""
+    },
+    {
+      "id": 19,
+      "starred": false,
+      "company": "BioTech Labs",
+      "program": "Bioinformatics Developer",
+      "workType": "Full-time",
+      "status": "Rejected",
+      "applicationDate": "2026-01-15",
+      "notes": "Over 30 days - long wait"
+    },
+    {
+      "id": 20,
+      "starred": true,
+      "company": "SpaceXplore",
+      "program": "Space Software Engineer",
+      "workType": "Internship",
+      "status": "Test Phase",
+      "applicationDate": "2026-02-05",
+      "notes": "Over 30 days - dream job!"
+    }
+  ],
+  "deletedApplications": [
+    {
+      "id": 101,
+      "starred": false,
+      "company": "OldCompany",
+      "program": "Software Engineer",
+      "workType": "Full-time",
+      "status": "Rejected",
+      "applicationDate": "2026-03-15",
+      "notes": "Withdrawn"
+    }
+  ],
+  "columns": [
+    {
+      "id": "Applied",
+      "label": "Applied",
+      "description": "Applications sent and awaiting the next step.",
+      "color": "sky",
+      "isDefault": true
+    },
+    {
+      "id": "Test Phase",
+      "label": "Test Phase",
+      "description": "Assignments, exams, and screening steps in progress.",
+      "color": "amber",
+      "isDefault": true
+    },
+    {
+      "id": "No Response",
+      "label": "No Response",
+      "description": "Applications that have gone quiet with no follow-up yet.",
+      "color": "violet",
+      "isDefault": true
+    },
+    {
+      "id": "Rejected",
+      "label": "Rejected",
+      "description": "Closed out or declined applications.",
+      "color": "rose",
+      "isDefault": true
+    }
+  ]
+}
