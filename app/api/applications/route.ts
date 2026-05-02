@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDashboardState, saveDashboardState } from '@/lib/application-store';
-import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
+import { DEFAULT_COLUMNS, STATUS_OPTIONS, WORK_TYPE_OPTIONS, COLOR_OPTIONS, type Application, type ApplicationStatus, type KanbanColumn, type WorkType } from '@/lib/types';
 
 type CreateApplicationPayload = Omit<Application, 'id' | 'starred'>;
 type ExistingApplicationResult = {
@@ -151,7 +151,11 @@ export async function GET(request: Request) {
     ));
   }
 
-  return NextResponse.json(state);
+  return NextResponse.json({
+    applications: state.applications,
+    deletedApplications: state.deletedApplications,
+    columns: state.columns ?? DEFAULT_COLUMNS,
+  });
 }
 
 export async function POST(request: Request) {
@@ -185,20 +189,22 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const body = (await request.json()) as { applications?: Application[]; deletedApplications?: Application[] } | Application[];
+  const body = (await request.json()) as { applications?: Application[]; deletedApplications?: Application[]; columns?: KanbanColumn[] } | Application[];
 
   if (Array.isArray(body)) {
-    await saveDashboardState({ applications: body, deletedApplications: [] });
+    const state = await getDashboardState();
+    await saveDashboardState({ applications: body, deletedApplications: state.deletedApplications, columns: state.columns });
     return NextResponse.json({ ok: true });
   }
 
   const applications = body.applications;
   const deletedApplications = body.deletedApplications ?? [];
+  const columns = body.columns;
 
   if (!Array.isArray(applications) || !Array.isArray(deletedApplications)) {
     return NextResponse.json({ error: 'Invalid applications payload' }, { status: 400 });
   }
 
-  await saveDashboardState({ applications, deletedApplications });
+  await saveDashboardState({ applications, deletedApplications, columns });
   return NextResponse.json({ ok: true });
 }

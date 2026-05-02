@@ -7,8 +7,8 @@ import { ApplicationForm } from './application-form';
 import { StatusBadge } from './status-badge';
 import { ThemeToggle } from './theme-toggle';
 import { useToast } from './toast';
-import { statusBadgeStyles, statusDotStyles, statusSurfaceStyles } from '@/lib/status-styles';
-import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
+import { getColumnStyles, statusBadgeStyles, statusDotStyles, statusSurfaceStyles } from '@/lib/status-styles';
+import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, DEFAULT_COLUMNS, COLOR_OPTIONS, type Application, type ApplicationStatus, type WorkType, type KanbanColumn } from '@/lib/types';
 
 type WorkFilterValue = 'All' | WorkType;
 type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationDate' | 'notes';
@@ -28,20 +28,7 @@ function getStoredTimeViewMode(): TimeViewMode {
   return stored === 'week' || stored === 'day' ? stored : 'day';
 }
 
-type KanbanColumn = {
-  id: ApplicationStatus;
-  label: string;
-  description: string;
-};
-
 const STATUS_ORDER: ApplicationStatus[] = ['Applied', 'Test Phase', 'No Response', 'Rejected'];
-
-const KANBAN_COLUMNS: KanbanColumn[] = [
-  { id: 'Applied', label: 'Applied', description: 'Applications sent and awaiting the next step.' },
-  { id: 'Test Phase', label: 'Test Phase', description: 'Assignments, exams, and screening steps in progress.' },
-  { id: 'No Response', label: 'No Response', description: 'Applications that have gone quiet with no follow-up yet.' },
-  { id: 'Rejected', label: 'Rejected', description: 'Closed out or declined applications.' },
-];
 
 const statusRank = new Map(STATUS_ORDER.map((status, index) => [status, index]));
 
@@ -230,13 +217,14 @@ function TimeVisualization({ applications, timeViewMode, onTimeViewChange }: {
   );
 }
 
-function ColumnDropZone({ id, children }: { id: ApplicationStatus; children: ReactNode }) {
+function ColumnDropZone({ id, children, color }: { id: string; children: ReactNode; color?: string }) {
   const { isDropTarget, ref } = useDroppable({ id });
+  const styles = color ? getColumnStyles(color) : null;
 
   return (
     <div
       ref={ref}
-      className={`flex h-[400px] flex-col gap-3 rounded-3xl border px-4 py-4 overflow-y-auto transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'}`}
+      className={`flex h-[400px] flex-col gap-3 rounded-3xl border px-4 py-4 overflow-y-auto transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'} ${styles ? '' : ''}`}
     >
       {children}
     </div>
@@ -249,6 +237,80 @@ function isOlderThan30Days(dateString: string): boolean {
   const diffTime = today.getTime() - applicationDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   return diffDays > 30;
+}
+
+function AddColumnModal({ onClose, onAdd }: { onClose: () => void; onAdd: (label: string, description: string, color: string) => void }) {
+  const [label, setLabel] = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor] = useState('sky');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!label.trim()) return;
+    onAdd(label, description, color);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--theme-overlay)] px-4 py-6 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-3xl bg-[color:var(--theme-card-strong)] p-6 shadow-2xl shadow-slate-900/10" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Add New Column</h3>
+        <p className="mt-1 text-sm text-[color:var(--theme-text-muted)]">Create a custom column to organize your applications.</p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[color:var(--theme-text)]">
+              Column Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              autoFocus
+              type="text"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="e.g., Interview, Offer, Screening"
+              className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[color:var(--theme-text)]">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional description for this column"
+              className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[color:var(--theme-text)]">Color</label>
+            <div className="grid grid-cols-5 gap-2">
+              {COLOR_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setColor(option.value)}
+                  className={`flex items-center justify-center rounded-xl border-2 p-3 transition ${color === option.value ? 'border-[color:var(--theme-focus)]' : 'border-transparent'}`}
+                >
+                  <span className={`h-6 w-6 rounded-full ${option.preview}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button type="button" onClick={onClose} className="rounded-xl border border-[color:var(--theme-border)] px-4 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
+              Cancel
+            </button>
+            <button type="submit" disabled={!label.trim()} className="rounded-xl bg-[color:var(--theme-text)] px-4 py-2 text-sm font-medium text-[color:var(--theme-surface-0)] hover:bg-[color:var(--theme-accent-strong)] disabled:opacity-50 disabled:cursor-not-allowed">
+              Add Column
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function DraggableCard({ application, onStar, onDetails, onDelete }: {
@@ -310,9 +372,10 @@ function DraggableCard({ application, onStar, onDetails, onDelete }: {
   );
 }
 
-export default function JobTracker({ initialApplications, initialDeletedApplications }: { initialApplications: Application[]; initialDeletedApplications: Application[] }) {
+export default function JobTracker({ initialApplications, initialDeletedApplications, initialColumns }: { initialApplications: Application[]; initialDeletedApplications: Application[]; initialColumns: KanbanColumn[] }) {
   const [applications, setApplications] = useState<Application[]>(initialApplications);
   const [deletedApplications, setDeletedApplications] = useState<Application[]>(initialDeletedApplications);
+  const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<ApplicationStatus[]>([]);
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
@@ -329,6 +392,8 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [timeViewLoaded, setTimeViewLoaded] = useState(false);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
   const workFilterRef = useRef<HTMLDivElement | null>(null);
   const { showToast } = useToast();
@@ -409,11 +474,15 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     window.localStorage.setItem('job-tracker-time-view-mode', timeViewMode);
   }, [timeViewLoaded, timeViewMode]);
 
-  const persistState = (nextApplications: Application[], nextDeletedApplications: Application[]) => {
+  const persistState = (nextApplications: Application[], nextDeletedApplications: Application[], nextColumns?: KanbanColumn[]) => {
     fetch('/api/applications', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ applications: nextApplications, deletedApplications: nextDeletedApplications }),
+      body: JSON.stringify({
+        applications: nextApplications,
+        deletedApplications: nextDeletedApplications,
+        columns: nextColumns ?? columns,
+      }),
     }).catch(() => {
       // Keep the UI responsive even if persistence fails.
     });
@@ -532,7 +601,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       || item.company.toLowerCase().includes(query)
       || item.program.toLowerCase().includes(query);
 
-    return KANBAN_COLUMNS.map((column) => {
+    return columns.map((column) => {
       const items = applications
         .filter((item) => item.status === column.id)
         .filter((item) => matchesQuery(item))
@@ -549,9 +618,9 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
         items,
       };
     });
-  }, [applications, search, statusFilters, workFilter]);
+  }, [applications, search, statusFilters, workFilter, columns]);
 
-  const moveApplication = (id: number, newStatus: ApplicationStatus) => {
+  const moveApplication = (id: number, newStatus: string) => {
     const app = applications.find((item) => item.id === id);
     const isGoingToTestPhase = app?.status === 'Applied' && newStatus === 'Test Phase';
 
@@ -565,6 +634,45 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       persistState(nextApplications, deletedApplications);
       return nextApplications;
     });
+  };
+
+  const addColumn = (label: string, description: string, color: string) => {
+    const id = label.trim();
+    if (columns.some((c) => c.id === id)) {
+      showToast('A column with this name already exists.', 'error');
+      return;
+    }
+
+    const newColumn: KanbanColumn = {
+      id,
+      label: label.trim(),
+      description: description.trim(),
+      color,
+      isDefault: false,
+    };
+
+    const nextColumns = [...columns, newColumn];
+    setColumns(nextColumns);
+    persistState(applications, deletedApplications, nextColumns);
+    setIsAddColumnOpen(false);
+    showToast(`Column "${label.trim()}" added.`, 'success');
+  };
+
+  const deleteColumn = (columnId: string) => {
+    const column = columns.find((c) => c.id === columnId);
+    if (!column || column.isDefault) return;
+
+    const appsInColumn = applications.filter((app) => app.status === columnId);
+    if (appsInColumn.length > 0) {
+      showToast(`Cannot delete column with ${appsInColumn.length} application(s). Move them first.`, 'error');
+      return;
+    }
+
+    const nextColumns = columns.filter((c) => c.id !== columnId);
+    setColumns(nextColumns);
+    persistState(applications, deletedApplications, nextColumns);
+    setColumnToDelete(null);
+    showToast(`Column "${column.label}" deleted.`, 'success');
   };
 
   const draggedApplication = draggedId ? applications.find((item) => item.id === draggedId) ?? null : null;
@@ -737,41 +845,68 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
               }
 
               if (typeof sourceId === 'number' && typeof targetId === 'string') {
-                moveApplication(sourceId, targetId as ApplicationStatus);
+                moveApplication(sourceId, targetId);
               }
             }}
           >
-            <div className="mt-6 grid gap-4 lg:grid-cols-4">
-              {boardColumns.map((column) => (
-                <div key={column.id} className="flex flex-col gap-3">
-                  <div className={`h-20 rounded-3xl border px-4 py-4 ${statusSurfaceStyles[column.id]}`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-semibold">{column.label}</div>
-                        <div className="mt-1 text-xs opacity-75">{column.description}</div>
+            <div className="mt-6 grid gap-4 overflow-x-auto pb-4" style={{ gridTemplateColumns: `repeat(${columns.length + 1}, minmax(320px, 1fr))` }}>
+              {boardColumns.map((column) => {
+                const columnStyles = getColumnStyles(column.color);
+                return (
+                  <div key={column.id} className="flex flex-col gap-3">
+                    <div className={`h-20 rounded-3xl border px-4 py-4 ${columnStyles.surface}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold truncate">{column.label}</div>
+                          <div className="mt-1 text-xs opacity-75 truncate">{column.description}</div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-2">
+                          <span className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${columnStyles.badge}`}>
+                            {column.items.length}
+                          </span>
+                          {!column.isDefault && (
+                            <button
+                              type="button"
+                              onClick={() => setColumnToDelete(column.id)}
+                              className="flex h-6 w-6 items-center justify-center rounded-full text-xs opacity-60 transition hover:opacity-100 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400"
+                              title="Delete column"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <span className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ${statusBadgeStyles[column.id]}`}>
-                        {column.items.length}
-                      </span>
                     </div>
+                    <ColumnDropZone id={column.id} color={column.color}>
+                      {column.items.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-[color:var(--theme-border)] px-4 py-6 text-center text-xs text-[color:var(--theme-text-muted)]">
+                          Drag applications here.
+                        </div>
+                      ) : column.items.map((item) => (
+                        <DraggableCard
+                          key={item.id}
+                          application={item}
+                          onStar={toggleStar}
+                          onDetails={() => { setSelectedApplication(item); setActiveDetailField(null); }}
+                          onDelete={() => removeApplication(item.id)}
+                        />
+                      ))}
+                    </ColumnDropZone>
                   </div>
-                  <ColumnDropZone id={column.id}>
-                    {column.items.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-[color:var(--theme-border)] px-4 py-6 text-center text-xs text-[color:var(--theme-text-muted)]">
-                        Drag applications here.
-                      </div>
-                    ) : column.items.map((item) => (
-                      <DraggableCard
-                        key={item.id}
-                        application={item}
-                        onStar={toggleStar}
-                        onDetails={() => { setSelectedApplication(item); setActiveDetailField(null); }}
-                        onDelete={() => removeApplication(item.id)}
-                      />
-                    ))}
-                  </ColumnDropZone>
-                </div>
-              ))}
+                );
+              })}
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddColumnOpen(true)}
+                  className="h-20 rounded-3xl border-2 border-dashed border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] px-4 py-4 text-sm font-medium text-[color:var(--theme-text-muted)] transition hover:border-[color:var(--theme-focus)] hover:text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-2)]"
+                >
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <span className="text-2xl leading-none">+</span>
+                    <span>Add Column</span>
+                  </div>
+                </button>
+              </div>
             </div>
             <DragOverlay>
               {draggedApplication ? (
@@ -1007,6 +1142,27 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           </div>
         </div>
       ) : null}
+
+      {isAddColumnOpen && <AddColumnModal onClose={() => setIsAddColumnOpen(false)} onAdd={addColumn} />}
+
+      {columnToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--theme-overlay)] px-4 py-6 backdrop-blur-sm" onClick={() => setColumnToDelete(null)}>
+          <div className="w-full max-w-md rounded-3xl bg-[color:var(--theme-card-strong)] p-6 shadow-2xl shadow-slate-900/10" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Delete Column</h3>
+            <p className="mt-2 text-sm text-[color:var(--theme-text-muted)]">
+              Are you sure you want to delete "<span className="font-medium">{columns.find((c) => c.id === columnToDelete)?.label}</span>"? This action cannot be undone.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button onClick={() => setColumnToDelete(null)} className="rounded-xl border border-[color:var(--theme-border)] px-4 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
+                Cancel
+              </button>
+              <button onClick={() => deleteColumn(columnToDelete)} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
