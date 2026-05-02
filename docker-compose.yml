@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  applylog:
+    image: lomarkomar/applylog:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    volumes:
+      - data:/app/data
+
+volumes:
+  data:
