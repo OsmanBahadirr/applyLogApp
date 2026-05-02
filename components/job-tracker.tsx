@@ -224,7 +224,7 @@ function ColumnDropZone({ id, children, color }: { id: string; children: ReactNo
   return (
     <div
       ref={ref}
-      className={`flex h-[400px] flex-col gap-3 rounded-3xl border px-4 py-4 overflow-y-auto transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'} ${styles ? '' : ''}`}
+      className={`flex h-[600px] flex-col gap-3 rounded-3xl border px-4 py-4 overflow-y-auto transition ${isDropTarget ? 'border-[color:var(--theme-focus)] bg-[color:var(--theme-accent-soft)]' : 'border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)]'} ${styles ? '' : ''}`}
     >
       {children}
     </div>
@@ -394,6 +394,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
   const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  const [transferTarget, setTransferTarget] = useState<string>('');
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
   const workFilterRef = useRef<HTMLDivElement | null>(null);
   const { showToast } = useToast();
@@ -639,7 +640,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const addColumn = (label: string, description: string, color: string) => {
     const id = label.trim();
     if (columns.some((c) => c.id === id)) {
-      showToast('A column with this name already exists.', 'error');
+      showToast('A column with this name already exists.', 'info');
       return;
     }
 
@@ -658,27 +659,35 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     showToast(`Column "${label.trim()}" added.`, 'success');
   };
 
-  const deleteColumn = (columnId: string) => {
+  const deleteColumn = (columnId: string, targetColumnId?: string) => {
     const column = columns.find((c) => c.id === columnId);
     if (!column || column.isDefault) return;
 
     const appsInColumn = applications.filter((app) => app.status === columnId);
-    if (appsInColumn.length > 0) {
-      showToast(`Cannot delete column with ${appsInColumn.length} application(s). Move them first.`, 'error');
+    let nextApplications = applications;
+
+    if (appsInColumn.length > 0 && targetColumnId) {
+      nextApplications = applications.map((app) =>
+        app.status === columnId ? { ...app, status: targetColumnId } : app
+      );
+    } else if (appsInColumn.length > 0 && !targetColumnId) {
+      showToast(`Cannot delete column with ${appsInColumn.length} application(s). Select a target column to transfer them first.`, 'info');
       return;
     }
 
     const nextColumns = columns.filter((c) => c.id !== columnId);
+    setApplications(nextApplications);
     setColumns(nextColumns);
-    persistState(applications, deletedApplications, nextColumns);
+    persistState(nextApplications, deletedApplications, nextColumns);
     setColumnToDelete(null);
+    setTransferTarget('');
     showToast(`Column "${column.label}" deleted.`, 'success');
   };
 
   const draggedApplication = draggedId ? applications.find((item) => item.id === draggedId) ?? null : null;
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto min-h-screen max-w-[95vw] px-4 py-6 sm:px-6 lg:px-8">
       <section className="rounded-[2rem] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-soft backdrop-blur-sm sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
@@ -1145,24 +1154,60 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
 
       {isAddColumnOpen && <AddColumnModal onClose={() => setIsAddColumnOpen(false)} onAdd={addColumn} />}
 
-      {columnToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--theme-overlay)] px-4 py-6 backdrop-blur-sm" onClick={() => setColumnToDelete(null)}>
-          <div className="w-full max-w-md rounded-3xl bg-[color:var(--theme-card-strong)] p-6 shadow-2xl shadow-slate-900/10" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Delete Column</h3>
-            <p className="mt-2 text-sm text-[color:var(--theme-text-muted)]">
-              Are you sure you want to delete "<span className="font-medium">{columns.find((c) => c.id === columnToDelete)?.label}</span>"? This action cannot be undone.
-            </p>
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button onClick={() => setColumnToDelete(null)} className="rounded-xl border border-[color:var(--theme-border)] px-4 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
-                Cancel
-              </button>
-              <button onClick={() => deleteColumn(columnToDelete)} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">
-                Delete
-              </button>
+      {columnToDelete && (() => {
+        const column = columns.find((c) => c.id === columnToDelete);
+        const appsInColumn = applications.filter((app) => app.status === columnToDelete);
+        const availableTargets = columns.filter((c) => c.id !== columnToDelete);
+        const hasCards = appsInColumn.length > 0;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--theme-overlay)] px-4 py-6 backdrop-blur-sm" onClick={() => { setColumnToDelete(null); setTransferTarget(''); }}>
+            <div className="w-full max-w-md rounded-3xl bg-[color:var(--theme-card-strong)] p-6 shadow-2xl shadow-slate-900/10" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Delete Column</h3>
+              <p className="mt-2 text-sm text-[color:var(--theme-text-muted)]">
+                Are you sure you want to delete "<span className="font-medium">{column?.label}</span>"? This action cannot be undone.
+              </p>
+
+              {hasCards && availableTargets.length > 0 && (
+                <div className="mt-4">
+                  <label className="mb-1.5 block text-sm font-medium text-[color:var(--theme-text)]">
+                    Transfer {appsInColumn.length} application(s) to:
+                  </label>
+                  <select
+                    value={transferTarget}
+                    onChange={(e) => setTransferTarget(e.target.value)}
+                    className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
+                  >
+                    <option value="">Select a column...</option>
+                    {availableTargets.map((target) => (
+                      <option key={target.id} value={target.id}>{target.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {hasCards && availableTargets.length === 0 && (
+                <p className="mt-4 text-sm text-amber-600 dark:text-amber-400">
+                  Cannot delete: no other columns exist to transfer applications to.
+                </p>
+              )}
+
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button onClick={() => { setColumnToDelete(null); setTransferTarget(''); }} className="rounded-xl border border-[color:var(--theme-border)] px-4 py-2 text-sm font-medium text-[color:var(--theme-text)] hover:bg-[color:var(--theme-surface-1)]">
+                  Cancel
+                </button>
+                <button
+                  onClick={() => hasCards ? deleteColumn(columnToDelete, transferTarget || undefined) : deleteColumn(columnToDelete)}
+                  disabled={hasCards && !transferTarget}
+                  className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </main>
   );
 }
