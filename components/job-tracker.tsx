@@ -22,6 +22,12 @@ function getStoredViewMode(): ViewMode {
   return stored === 'board' || stored === 'list' ? stored : 'list';
 }
 
+function getStoredTimeViewMode(): TimeViewMode {
+  if (typeof window === 'undefined') return 'day';
+  const stored = window.localStorage.getItem('job-tracker-time-view-mode');
+  return stored === 'week' || stored === 'day' ? stored : 'day';
+}
+
 type KanbanColumn = {
   id: ApplicationStatus;
   label: string;
@@ -304,6 +310,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [timeViewMode, setTimeViewMode] = useState<TimeViewMode>('day');
   const [hasLoadedViewMode, setHasLoadedViewMode] = useState(false);
+  const [timeViewLoaded, setTimeViewLoaded] = useState(false);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
@@ -371,13 +378,20 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
 
   useEffect(() => {
     setViewMode(getStoredViewMode());
+    setTimeViewMode(getStoredTimeViewMode());
     setHasLoadedViewMode(true);
+    setTimeViewLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!hasLoadedViewMode) return;
     window.localStorage.setItem('job-tracker-view-mode', viewMode);
   }, [hasLoadedViewMode, viewMode]);
+
+  useEffect(() => {
+    if (!timeViewLoaded) return;
+    window.localStorage.setItem('job-tracker-time-view-mode', timeViewMode);
+  }, [timeViewLoaded, timeViewMode]);
 
   const persistState = (nextApplications: Application[], nextDeletedApplications: Application[]) => {
     fetch('/api/applications', {
