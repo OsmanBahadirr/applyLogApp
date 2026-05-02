@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApplicationForm } from './application-form';
 import { StatusBadge } from './status-badge';
 import { ThemeToggle } from './theme-toggle';
+import { useToast } from './toast';
 import { statusBadgeStyles, statusDotStyles, statusSurfaceStyles } from '@/lib/status-styles';
 import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, type Application, type ApplicationStatus, type WorkType } from '@/lib/types';
 
@@ -307,6 +308,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [isTransitioning, setIsTransitioning] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
   const workFilterRef = useRef<HTMLDivElement | null>(null);
+  const { showToast } = useToast();
 
   const handleViewChange = (newMode: ViewMode) => {
     if (newMode === viewMode || isTransitioning) return;
@@ -519,9 +521,17 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     });
   }, [applications, search, statusFilters, workFilter]);
 
-  const moveApplication = (id: number, status: ApplicationStatus) => {
+  const moveApplication = (id: number, newStatus: ApplicationStatus) => {
+    const app = applications.find((item) => item.id === id);
+    const isGoingToTestPhase = app?.status === 'Applied' && newStatus === 'Test Phase';
+
+    if (isGoingToTestPhase) {
+      const companyName = app.company;
+      showToast(`Moved to Test Phase: ${companyName}`, 'luck');
+    }
+
     setApplications((current) => {
-      const nextApplications = current.map((item) => (item.id === id ? { ...item, status } : item));
+      const nextApplications = current.map((item) => (item.id === id ? { ...item, status: newStatus } : item));
       persistState(nextApplications, deletedApplications);
       return nextApplications;
     });
