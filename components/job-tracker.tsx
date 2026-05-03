@@ -22,10 +22,27 @@ function getStoredViewMode(): ViewMode {
   return stored === 'board' || stored === 'list' ? stored : 'list';
 }
 
-function getStoredTimeViewMode(): TimeViewMode {
-  if (typeof window === 'undefined') return 'day';
-  const stored = window.localStorage.getItem('job-tracker-time-view-mode');
-  return stored === 'week' || stored === 'day' ? stored : 'day';
+function getTimeChartData(applications: Application[], timeViewMode: TimeViewMode) {
+  const grouped = new Map<string, number>();
+
+  applications.forEach((app) => {
+    const date = new Date(app.applicationDate);
+    let key: string;
+
+    if (timeViewMode === 'day') {
+      key = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } else {
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      key = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+
+    grouped.set(key, (grouped.get(key) || 0) + 1);
+  });
+
+  return Array.from(grouped.entries())
+    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+    .slice(-14);
 }
 
 const STATUS_ORDER: ApplicationStatus[] = ['Applied', 'Test Phase', 'No Response', 'Rejected'];
@@ -57,33 +74,12 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function TimeVisualization({ applications, timeViewMode, onTimeViewChange }: {
+function TimeChart({ applications, timeViewMode, title }: {
   applications: Application[];
   timeViewMode: TimeViewMode;
-  onTimeViewChange: (mode: TimeViewMode) => void;
+  title: string;
 }) {
-  const timeData = useMemo(() => {
-    const grouped = new Map<string, number>();
-
-    applications.forEach((app) => {
-      const date = new Date(app.applicationDate);
-      let key: string;
-
-      if (timeViewMode === 'day') {
-        key = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      } else {
-        const weekStart = new Date(date);
-        weekStart.setDate(date.getDate() - date.getDay());
-        key = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-      }
-
-      grouped.set(key, (grouped.get(key) || 0) + 1);
-    });
-
-    return Array.from(grouped.entries())
-      .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-      .slice(-14);
-  }, [applications, timeViewMode]);
+  const timeData = useMemo(() => getTimeChartData(applications, timeViewMode), [applications, timeViewMode]);
 
   if (timeData.length === 0) {
     return null;
@@ -109,36 +105,19 @@ function TimeVisualization({ applications, timeViewMode, onTimeViewChange }: {
   }).join(' ');
 
   const areaPath = `${padding.left},${padding.top + innerHeight} ${points} ${padding.left + (dataPoints.length - 1) * xStep},${padding.top + innerHeight}`;
+  const gradientId = `areaGradient-${timeViewMode}`;
 
   return (
-    <div className="mt-8 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Applications over time</h3>
-          <p className="mt-1 text-sm text-[color:var(--theme-text-muted)]">Track your application activity</p>
-        </div>
-        <div className="flex h-10 items-center justify-center gap-1 rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] p-1">
-          <button
-            type="button"
-            onClick={() => onTimeViewChange('day')}
-            className={`h-full rounded-lg px-4 py-1.5 text-sm font-medium transition ${timeViewMode === 'day' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-text)]'}`}
-          >
-            Day
-          </button>
-          <button
-            type="button"
-            onClick={() => onTimeViewChange('week')}
-            className={`h-full rounded-lg px-4 py-1.5 text-sm font-medium transition ${timeViewMode === 'week' ? 'bg-[color:var(--theme-text)] text-[color:var(--theme-surface-0)]' : 'text-[color:var(--theme-text-muted)] hover:text-[color:var(--theme-text)]'}`}
-          >
-            Week
-          </button>
-        </div>
+    <div className="flex-1 min-w-0">
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-[color:var(--theme-text)]">{title}</h3>
+        <p className="mt-1 text-xs text-[color:var(--theme-text-muted)]">Track your application activity</p>
       </div>
 
       <div className="overflow-x-auto">
         <svg width={chartWidth} height={chartHeight} className="mx-auto">
           <defs>
-            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="var(--theme-accent)" stopOpacity="0.3" />
               <stop offset="100%" stopColor="var(--theme-accent)" stopOpacity="0.05" />
             </linearGradient>
@@ -146,7 +125,7 @@ function TimeVisualization({ applications, timeViewMode, onTimeViewChange }: {
 
           <polygon
             points={areaPath}
-            fill="url(#areaGradient)"
+            fill={`url(#${gradientId})`}
           />
 
           <polyline
@@ -212,6 +191,22 @@ function TimeVisualization({ applications, timeViewMode, onTimeViewChange }: {
             strokeWidth="1"
           />
         </svg>
+      </div>
+    </div>
+  );
+}
+
+function TimeVisualization({ applications }: {
+  applications: Application[];
+}) {
+  return (
+    <div className="mt-8 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-6">
+      <h3 className="text-lg font-semibold text-[color:var(--theme-text)]">Applications over time</h3>
+      <p className="mt-1 text-sm text-[color:var(--theme-text-muted)]">Track your application activity</p>
+
+      <div className="mt-4 flex gap-8">
+        <TimeChart applications={applications} timeViewMode="day" title="Daily" />
+        <TimeChart applications={applications} timeViewMode="week" title="Weekly" />
       </div>
     </div>
   );
@@ -387,9 +382,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [statusSortDirection, setStatusSortDirection] = useState<SortDirection>('asc');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [timeViewMode, setTimeViewMode] = useState<TimeViewMode>('day');
   const [hasLoadedViewMode, setHasLoadedViewMode] = useState(false);
-  const [timeViewLoaded, setTimeViewLoaded] = useState(false);
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
@@ -460,20 +453,13 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
 
   useEffect(() => {
     setViewMode(getStoredViewMode());
-    setTimeViewMode(getStoredTimeViewMode());
     setHasLoadedViewMode(true);
-    setTimeViewLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!hasLoadedViewMode) return;
     window.localStorage.setItem('job-tracker-view-mode', viewMode);
   }, [hasLoadedViewMode, viewMode]);
-
-  useEffect(() => {
-    if (!timeViewLoaded) return;
-    window.localStorage.setItem('job-tracker-time-view-mode', timeViewMode);
-  }, [timeViewLoaded, timeViewMode]);
 
   const persistState = (nextApplications: Application[], nextDeletedApplications: Application[], nextColumns?: KanbanColumn[]) => {
     fetch('/api/applications', {
@@ -1030,11 +1016,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           )}
         </div>
 
-        <TimeVisualization
-          applications={applications}
-          timeViewMode={timeViewMode}
-          onTimeViewChange={setTimeViewMode}
-        />
+        <TimeVisualization applications={applications} />
       </section>
 
       <ApplicationForm
