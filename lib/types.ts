@@ -76,3 +76,60 @@ export const WORK_TYPE_DETAILS: Array<{ type: WorkType; description: string }> =
   { type: 'Internship', description: 'Temporary position for students' },
   { type: 'Bootcamp', description: 'Training program with job placement' },
 ];
+
+export type AchievementId =
+  | 'first_application'
+  | 'five_applications'
+  | 'ten_applications'
+  | 'twenty_five_applications'
+  | 'fifty_applications'
+  | 'first_interview'
+  | 'fast_tracker'
+  | 'three_day_streak'
+  | 'seven_day_streak'
+  | 'fourteen_day_streak'
+  | 'thirty_day_streak'
+  | 'week_warrior'
+  | 'goal_crusher';
+
+export type Achievement = {
+  id: AchievementId;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt: string | null;
+};
+
+export type StreakData = {
+  current: number;
+  longest: number;
+  lastApplicationDate: string | null;
+};
+
+export type WeeklyGoal = {
+  target: number;
+  currentWeekStart: string;
+  completed: number;
+};
+
+export type GamificationState = {
+  achievements: Achievement[];
+  streak: StreakData;
+  weeklyGoal: WeeklyGoal;
+};
+
+export const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, 'unlockedAt'>[] = [
+  { id: 'first_application', title: 'First Step', description: 'Sent your first application', icon: '»' },
+  { id: 'five_applications', title: 'Getting Started', description: 'Sent 5 applications', icon: '¶' },
+  { id: 'ten_applications', title: 'Double Digits', description: 'Sent 10 applications', icon: '%' },
+  { id: 'twenty_five_applications', title: 'Quarter Century', description: 'Sent 25 applications', icon: '*' },
+  { id: 'fifty_applications', title: 'Half Century', description: 'Sent 50 applications', icon: '#' },
+  { id: 'first_interview', title: 'First Interview', description: 'Moved your first application to Test Phase', icon: '+' },
+  { id: 'fast_tracker', title: 'Fast Tracker', description: 'Moved an application to Test Phase within 3 days of applying', icon: '~' },
+  { id: 'three_day_streak', title: '3-Day Streak', description: 'Applied 3 days in a row', icon: '^' },
+  { id: 'seven_day_streak', title: 'Week Warrior', description: 'Applied 7 days in a row', icon: '^' },
+  { id: 'fourteen_day_streak', title: 'Fortnight Focus', description: 'Applied 14 days in a row', icon: '^' },
+  { id: 'thirty_day_streak', title: 'Monthly Machine', description: 'Applied 30 days in a row', icon: '^' },
+  { id: 'week_warrior', title: 'Week Warrior', description: 'Completed a weekly goal of 5+ applications', icon: '=' },
+  { id: 'goal_crusher', title: 'Goal Crusher', description: 'Completed 4 weekly goals in a row', icon: '@' },
+];

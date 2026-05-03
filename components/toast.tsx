@@ -69,7 +69,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 function LuckSnackbar({ message }: { message: string }) {
   return (
     <div className="relative flex items-center gap-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-3 shadow-lg shadow-amber-200/30 dark:border-amber-700 dark:from-amber-950 dark:to-yellow-950 dark:shadow-amber-900/20 animate-snackbar-in">
-      <span className="text-xl">🍀</span>
+      <span className="text-lg font-bold uppercase tracking-wider">L</span>
       <div>
         <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">{message}</p>
         <p className="text-xs text-amber-600 dark:text-amber-400">Good luck!</p>

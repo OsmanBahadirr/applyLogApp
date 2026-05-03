@@ -101,7 +101,7 @@ export function ApplicationForm({
 
           <label className="text-sm font-medium text-[color:var(--theme-text)]">
             Application date
-            <input type="date" className={fieldClass} value={form.applicationDate} onChange={(e) => setForm({ ...form, applicationDate: e.target.value })} />
+            <input type="date" max={getTodayDate()} className={fieldClass} value={form.applicationDate} onChange={(e) => setForm({ ...form, applicationDate: e.target.value })} />
           </label>
 
           <label className="md:col-span-2 text-sm font-medium text-[color:var(--theme-text)]">

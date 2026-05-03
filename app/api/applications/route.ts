@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDashboardState, saveDashboardState } from '@/lib/application-store';
+import { processNewApplication } from '@/lib/gamification-store';
 import { DEFAULT_COLUMNS, STATUS_OPTIONS, WORK_TYPE_OPTIONS, COLOR_OPTIONS, type Application, type ApplicationStatus, type KanbanColumn, type WorkType } from '@/lib/types';
 
 type CreateApplicationPayload = Omit<Application, 'id' | 'starred'>;
@@ -65,6 +66,10 @@ function readCreatePayload(body: unknown): { payload: CreateApplicationPayload }
 
   if (!isValidDateString(applicationDate)) {
     return { error: 'Application date must use YYYY-MM-DD format' };
+  }
+
+  if (applicationDate > getTodayDate()) {
+    return { error: 'Application date cannot be in the future' };
   }
 
   if (typeof notes !== 'string') {
@@ -185,13 +190,31 @@ export async function POST(request: Request) {
     deletedApplications: state.deletedApplications,
   });
 
-  return NextResponse.json({ application }, { status: 201 });
+  const nextApplications = [application, ...state.applications];
+  const { newAchievements } = await processNewApplication(application, nextApplications);
+
+  return NextResponse.json({ application, newAchievements }, { status: 201 });
 }
 
 export async function PUT(request: Request) {
   const body = (await request.json()) as { applications?: Application[]; deletedApplications?: Application[]; columns?: KanbanColumn[] } | Application[];
 
+  const today = getTodayDate();
+
+  const validateApplications = (apps: Application[]): string | null => {
+    for (const app of apps) {
+      if (app.applicationDate > today) {
+        return `Application date for "${app.company}" cannot be in the future`;
+      }
+    }
+    return null;
+  };
+
   if (Array.isArray(body)) {
+    const error = validateApplications(body);
+    if (error) {
+      return NextResponse.json({ error }, { status: 400 });
+    }
     const state = await getDashboardState();
     await saveDashboardState({ applications: body, deletedApplications: state.deletedApplications, columns: state.columns });
     return NextResponse.json({ ok: true });
@@ -203,6 +226,11 @@ export async function PUT(request: Request) {
 
   if (!Array.isArray(applications) || !Array.isArray(deletedApplications)) {
     return NextResponse.json({ error: 'Invalid applications payload' }, { status: 400 });
+  }
+
+  const error = validateApplications(applications);
+  if (error) {
+    return NextResponse.json({ error }, { status: 400 });
   }
 
   await saveDashboardState({ applications, deletedApplications, columns });

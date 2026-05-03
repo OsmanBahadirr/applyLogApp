@@ -7,8 +7,11 @@ import { ApplicationForm } from './application-form';
 import { StatusBadge } from './status-badge';
 import { ThemeToggle } from './theme-toggle';
 import { useToast } from './toast';
+import { StreakCounter } from './streak-counter';
+import { AchievementPanel, AchievementToast } from './achievements';
+import { WeeklyGoalWidget } from './weekly-goal';
 import { getColumnStyles, statusBadgeStyles, statusDotStyles, statusSurfaceStyles } from '@/lib/status-styles';
-import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, DEFAULT_COLUMNS, COLOR_OPTIONS, type Application, type ApplicationStatus, type WorkType, type KanbanColumn } from '@/lib/types';
+import { STATUS_OPTIONS, WORK_TYPE_OPTIONS, WORK_TYPE_DETAILS, DEFAULT_COLUMNS, COLOR_OPTIONS, type Application, type ApplicationStatus, type WorkType, type KanbanColumn, type Achievement, type GamificationState, type StreakData, type WeeklyGoal } from '@/lib/types';
 
 type WorkFilterValue = 'All' | WorkType;
 type DetailField = 'company' | 'program' | 'status' | 'workType' | 'applicationDate' | 'notes';
@@ -20,6 +23,12 @@ function getStoredViewMode(): ViewMode {
   if (typeof window === 'undefined') return 'list';
   const stored = window.localStorage.getItem('job-tracker-view-mode');
   return stored === 'board' || stored === 'list' ? stored : 'list';
+}
+
+function getTodayDate() {
+  const date = new Date();
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
 function getTimeChartData(applications: Application[], timeViewMode: TimeViewMode) {
@@ -388,6 +397,8 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
   const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
   const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
   const [transferTarget, setTransferTarget] = useState<string>('');
+  const [gamification, setGamification] = useState<GamificationState | null>(null);
+  const [pendingAchievements, setPendingAchievements] = useState<Achievement[]>([]);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
   const workFilterRef = useRef<HTMLDivElement | null>(null);
   const { showToast } = useToast();
@@ -461,6 +472,13 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
     window.localStorage.setItem('job-tracker-view-mode', viewMode);
   }, [hasLoadedViewMode, viewMode]);
 
+  useEffect(() => {
+    fetch('/api/gamification')
+      .then((res) => res.json())
+      .then((data) => setGamification(data))
+      .catch(() => {});
+  }, []);
+
   const persistState = (nextApplications: Application[], nextDeletedApplications: Application[], nextColumns?: KanbanColumn[]) => {
     fetch('/api/applications', {
       method: 'PUT',
@@ -525,7 +543,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       return;
     }
 
-    const result = (await response.json()) as { application?: Application };
+    const result = (await response.json()) as { application?: Application; newAchievements?: string[] };
 
     const createdApplication = result.application;
 
@@ -533,7 +551,32 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
       return;
     }
 
-    setApplications((current) => [createdApplication, ...current.filter((item) => item.id !== createdApplication.id)]);
+    const nextApplications = [createdApplication, ...applications.filter((item) => item.id !== createdApplication.id)];
+    setApplications(nextApplications);
+
+    if (result.newAchievements && result.newAchievements.length > 0 && gamification) {
+      const newAchievementDetails = gamification.achievements.filter(
+        (a) => result.newAchievements?.includes(a.id)
+      );
+      setPendingAchievements(newAchievementDetails);
+
+      setTimeout(() => {
+        fetch('/api/gamification')
+          .then((res) => res.json())
+          .then((data: GamificationState) => {
+            setGamification(data);
+          })
+          .catch(() => {});
+      }, 500);
+    } else {
+      fetch('/api/gamification')
+        .then((res) => res.json())
+        .then((data: GamificationState) => {
+          setGamification(data);
+        })
+        .catch(() => {});
+    }
+
     setIsFormOpen(false);
   };
 
@@ -702,6 +745,28 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           <StatCard label="No Response" value={summary.noResponse} />
           <StatCard label="Rejected" value={summary.rejected} />
         </div>
+
+        {gamification && (
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <StreakCounter streak={gamification.streak} />
+            <WeeklyGoalWidget
+              goal={gamification.weeklyGoal}
+              onUpdate={(target) => {
+                fetch('/api/gamification', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ weeklyGoal: { target } }),
+                })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    setGamification((prev) => prev ? { ...prev, weeklyGoal: data.weeklyGoal } : prev);
+                  })
+                  .catch(() => {});
+              }}
+            />
+            <AchievementPanel achievements={gamification.achievements} />
+          </div>
+        )}
 
         <div className={`mt-6 grid gap-3 rounded-3xl border border-[color:var(--theme-border)] bg-[color:var(--theme-surface-1)] p-4 ${viewMode === 'board' ? 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]' : 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]'}`}>
           <input
@@ -1092,6 +1157,7 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
                       <input
                         autoFocus
                         type="date"
+                        max={getTodayDate()}
                         value={selectedApplication.applicationDate}
                         onChange={(e) => updateSelectedApplication({ applicationDate: e.target.value })}
                         className="w-full rounded-xl border border-[color:var(--theme-border)] bg-[color:var(--theme-card-strong)] px-3 py-2 text-sm text-[color:var(--theme-text)] outline-none focus:border-[color:var(--theme-focus)] focus:ring-4 focus:ring-[color:var(--theme-accent-soft)]"
@@ -1190,6 +1256,15 @@ export default function JobTracker({ initialApplications, initialDeletedApplicat
           </div>
         );
       })()}
+
+      {pendingAchievements.length > 0 && (
+        <div className="fixed inset-x-0 bottom-20 z-[100] flex flex-col items-center pointer-events-none">
+          <AchievementToast
+            achievements={pendingAchievements}
+            onClose={() => setPendingAchievements([])}
+          />
+        </div>
+      )}
     </main>
   );
 }
