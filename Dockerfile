@@ -1,11 +1,11 @@
-FROM node:20-alpine AS deps
+FROM oven/bun:1.1.16-alpine AS deps
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
 
-FROM node:20-alpine AS builder
+FROM oven/bun:1.1.16-alpine AS builder
 
 WORKDIR /app
 
@@ -17,9 +17,9 @@ RUN mkdir -p data && [ -f data/applications.json ] || echo "[]" > data/applicati
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_DISABLE_ESLINT=1
 
-RUN npm run build
+RUN bun run build
 
-FROM gcr.io/distroless/nodejs24-debian13:nonroot
+FROM oven/bun:1.1.16-alpine AS runner
 
 WORKDIR /app
 
@@ -32,4 +32,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["node_modules/next/dist/bin/next", "start", "-p", "3000"]
+CMD ["bun", "node_modules/next/dist/bin/next", "start", "-p", "3000"]
